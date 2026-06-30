@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Redirigir /admin a /admin/
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/admin$
+RewriteRule ^(.*)$ /admin/ [R=301,L]
+
+# Prevenir listado de directorios
+Options -Indexes
+
+# PHP config
+php_value upload_max_filesize 50M
+php_value post_max_size 50M
+php_value max_execution_time 120
