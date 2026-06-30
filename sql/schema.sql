@@ -41,6 +41,7 @@ CREATE TABLE lessons (
     title VARCHAR(255) NOT NULL,
     content_html LONGTEXT DEFAULT '',
     video_url VARCHAR(500),
+    live_url VARCHAR(500),
     sort_order INT DEFAULT 0,
     FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -198,3 +199,6 @@ CREATE TABLE audit_log (
 -- ═══════════ MIGRACIÓN v3 — SKU para cursos ═══════════
 -- ALTER TABLE courses ADD COLUMN sku VARCHAR(100) UNIQUE AFTER thumbnail_url;
 -- UPDATE courses SET sku = 'FUND-SEG-IND' WHERE id = 1 AND sku IS NULL;
+
+-- ═══════════ MIGRACIÓN v4 — Clases en vivo ═══════════
+-- ALTER TABLE lessons ADD COLUMN live_url VARCHAR(500) AFTER video_url;

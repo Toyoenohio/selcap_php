@@ -46,6 +46,9 @@ safeExec($pdo, "CREATE TABLE IF NOT EXISTS audit_log (
 safeExec($pdo, "ALTER TABLE courses ADD COLUMN sku VARCHAR(100) UNIQUE AFTER thumbnail_url", 'sku en courses');
 safeExec($pdo, "UPDATE courses SET sku = 'FUND-SEG-IND' WHERE id = 1 AND sku IS NULL", 'sku curso demo');
 
+// ── v4: Clases en vivo ──
+safeExec($pdo, "ALTER TABLE lessons ADD COLUMN live_url VARCHAR(500) AFTER video_url", 'live_url en lessons');
+
 $allOk = !in_array(false, array_map(fn($r) => !str_starts_with($r, '❌'), $results), true);
 ?>
 <!DOCTYPE html>
