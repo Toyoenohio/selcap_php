@@ -42,6 +42,10 @@ safeExec($pdo, "CREATE TABLE IF NOT EXISTS audit_log (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", 'tabla audit_log');
 
+// ── v3: SKU para cursos ──
+safeExec($pdo, "ALTER TABLE courses ADD COLUMN sku VARCHAR(100) UNIQUE AFTER thumbnail_url", 'sku en courses');
+safeExec($pdo, "UPDATE courses SET sku = 'FUND-SEG-IND' WHERE id = 1 AND sku IS NULL", 'sku curso demo');
+
 $allOk = !in_array(false, array_map(fn($r) => !str_starts_with($r, '❌'), $results), true);
 ?>
 <!DOCTYPE html>

@@ -19,6 +19,7 @@ CREATE TABLE courses (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     thumbnail_url VARCHAR(500),
+    sku VARCHAR(100) UNIQUE,
     is_sequential TINYINT(1) DEFAULT 0,
     passing_grade INT DEFAULT 70,
     status ENUM('draft','published','archived') DEFAULT 'published',
@@ -129,8 +130,8 @@ INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES
 ('admin@selcap.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Admin', 'Selcap', 'admin');
 
 -- Curso demo
-INSERT INTO courses (id, title, description, is_sequential, passing_grade, status) VALUES
-(1, 'Fundamentos de Seguridad Industrial', 'Curso introductorio sobre normas básicas de seguridad en el trabajo. Aprende a identificar riesgos, usar EPP y actuar ante emergencias.', 1, 70, 'published');
+INSERT INTO courses (id, title, description, sku, is_sequential, passing_grade, status) VALUES
+(1, 'Fundamentos de Seguridad Industrial', 'Curso introductorio sobre normas básicas de seguridad en el trabajo. Aprende a identificar riesgos, usar EPP y actuar ante emergencias.', 'FUND-SEG-IND', 1, 70, 'published');
 
 -- Secciones
 INSERT INTO sections (id, course_id, title, description, sort_order) VALUES
@@ -193,3 +194,7 @@ CREATE TABLE audit_log (
 -- ALTER TABLE evaluations ADD COLUMN passing_score INT DEFAULT 80 AFTER max_attempts;
 -- ALTER TABLE evaluations MODIFY max_attempts INT DEFAULT 1;
 -- ALTER TABLE evaluation_attempts ADD COLUMN feedback TEXT AFTER answers_snapshot;
+
+-- ═══════════ MIGRACIÓN v3 — SKU para cursos ═══════════
+-- ALTER TABLE courses ADD COLUMN sku VARCHAR(100) UNIQUE AFTER thumbnail_url;
+-- UPDATE courses SET sku = 'FUND-SEG-IND' WHERE id = 1 AND sku IS NULL;

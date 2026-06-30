@@ -51,6 +51,7 @@ require __DIR__ . '/../includes/header.php';
     <p class="text-gray-500 text-sm">Gestionar secciones, lecciones y evaluaciones</p>
   </div>
   <div class="flex items-center gap-2 text-sm">
+    <a href="<?= BASE_URL ?>/admin/courses.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Cursos</a>
     <a href="<?= BASE_URL ?>/admin/" class="bg-selcap-600 text-white px-4 py-2 rounded-xl font-semibold">Secciones</a>
     <a href="<?= BASE_URL ?>/admin/lessons.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Lecciones</a>
     <a href="<?= BASE_URL ?>/admin/evaluations.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Evaluaciones</a>
