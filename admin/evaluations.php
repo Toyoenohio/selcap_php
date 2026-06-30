@@ -8,12 +8,12 @@ $msg = ''; $msgType = '';
 // ── Acciones ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'create_evaluation') {
-        $stmt = $pdo->prepare('INSERT INTO evaluations (section_id, title, description, max_attempts, sort_order) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([(int)$_POST['section_id'], trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['max_attempts'], $_POST['sort_order'] ?? 0]);
+        $stmt = $pdo->prepare('INSERT INTO evaluations (section_id, title, description, max_attempts, passing_score, sort_order) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->execute([(int)$_POST['section_id'], trim($_POST['title']), $_POST['description'] ?? '', 1, (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0]);
         $msg = 'Evaluación creada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'update_evaluation') {
-        $pdo->prepare('UPDATE evaluations SET section_id = ?, title = ?, description = ?, max_attempts = ?, sort_order = ? WHERE id = ?')
-            ->execute([(int)$_POST['section_id'], trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['max_attempts'], $_POST['sort_order'] ?? 0, (int)$_POST['id']]);
+        $pdo->prepare('UPDATE evaluations SET section_id = ?, title = ?, description = ?, passing_score = ?, sort_order = ? WHERE id = ?')
+            ->execute([(int)$_POST['section_id'], trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, (int)$_POST['id']]);
         $msg = 'Evaluación actualizada.'; $msgType = 'blue';
     } elseif ($_POST['action'] === 'delete_evaluation') {
         $pdo->prepare('DELETE FROM evaluations WHERE id = ?')->execute([(int)$_POST['id']]);
@@ -23,11 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute([(int)$_POST['evaluation_id'], trim($_POST['text']), 'multiple_choice', (int)$_POST['points'], $_POST['sort_order'] ?? 0]);
         $qId = (int) $pdo->lastInsertId();
 
-        // Insertar respuestas
         $answerTexts = $_POST['answer_text'] ?? [];
         $answerCorrect = $_POST['answer_correct'] ?? '';
-
-        // Invertir lógica: answer_correct viene como el índice de la correcta
         $correctIdx = (int)$answerCorrect;
         foreach ($answerTexts as $i => $text) {
             if (!trim($text)) continue;
@@ -41,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $pdo->prepare('UPDATE questions SET text = ?, points = ?, sort_order = ? WHERE id = ?')
             ->execute([trim($_POST['text']), (int)$_POST['points'], $_POST['sort_order'] ?? 0, $qId]);
 
-        // Actualizar respuestas (borrar y recrear)
         $pdo->prepare('DELETE FROM answers WHERE question_id = ?')->execute([$qId]);
         $answerTexts = $_POST['answer_text'] ?? [];
         $answerCorrect = $_POST['answer_correct'] ?? '0';
@@ -56,6 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'delete_question') {
         $pdo->prepare('DELETE FROM questions WHERE id = ?')->execute([(int)$_POST['q_id']]);
         $msg = 'Pregunta eliminada.'; $msgType = 'red';
+    } elseif ($_POST['action'] === 'save_feedback') {
+        $attemptId = (int)$_POST['attempt_id'];
+        $feedback = trim($_POST['feedback'] ?? '');
+        $pdo->prepare('UPDATE evaluation_attempts SET feedback = ? WHERE id = ?')
+            ->execute([$feedback ?: null, $attemptId]);
+        $msg = 'Retroalimentación guardada.'; $msgType = 'green';
     }
 }
 
@@ -92,6 +94,18 @@ if ($evaluations) {
     }
 }
 
+// Intentos de estudiantes (para feedback)
+$attemptsByEval = [];
+if ($evaluations) {
+    $attStmt = $pdo->prepare("SELECT ea.*, u.first_name, u.last_name, u.email FROM evaluation_attempts ea
+        JOIN users u ON ea.user_id = u.id
+        WHERE ea.evaluation_id IN ($in) ORDER BY ea.submitted_at DESC LIMIT 100");
+    $attStmt->execute();
+    foreach ($attStmt->fetchAll() as $att) {
+        $attemptsByEval[$att['evaluation_id']][] = $att;
+    }
+}
+
 $pageTitle = 'Admin — Evaluaciones';
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -102,6 +116,8 @@ require __DIR__ . '/../includes/header.php';
     <a href="<?= BASE_URL ?>/admin/" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Secciones</a>
     <a href="<?= BASE_URL ?>/admin/lessons.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Lecciones</a>
     <a href="<?= BASE_URL ?>/admin/evaluations.php" class="bg-selcap-600 text-white px-4 py-2 rounded-xl font-semibold">Evaluaciones</a>
+    <a href="<?= BASE_URL ?>/admin/alumnos.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Alumnos</a>
+    <a href="<?= BASE_URL ?>/admin/reportes.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Reportes</a>
   </div>
 </div>
 
@@ -129,8 +145,11 @@ require __DIR__ . '/../includes/header.php';
              class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <input type="number" name="max_attempts" placeholder="Máx intentos" value="3"
-             class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">% Aprobación</label>
+        <input type="number" name="passing_score" placeholder="80" value="80" min="0" max="100"
+               class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
+      </div>
       <input type="number" name="sort_order" placeholder="Orden" value="0"
              class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
@@ -145,6 +164,7 @@ require __DIR__ . '/../includes/header.php';
 <!-- Lista -->
 <?php foreach ($evaluations as $ev): 
   $questions = $allQ[$ev['id']] ?? [];
+  $attempts = $attemptsByEval[$ev['id']] ?? [];
 ?>
   <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-4">
     <form method="POST" class="space-y-3 mb-4">
@@ -160,8 +180,11 @@ require __DIR__ . '/../includes/header.php';
                class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-medium">
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <input type="number" name="max_attempts" value="<?= $ev['max_attempts'] ?>"
-               class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">% Aprobación</label>
+          <input type="number" name="passing_score" value="<?= $ev['passing_score'] ?? 80 ?>" min="0" max="100"
+                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+        </div>
         <input type="number" name="sort_order" value="<?= $ev['sort_order'] ?>"
                class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
       </div>
@@ -205,7 +228,6 @@ require __DIR__ . '/../includes/header.php';
                   <?php endif; ?>
                 </div>
               <?php endforeach; ?>
-              <!-- Campo extra para nueva respuesta -->
               <?php $newIdx = count($answers); ?>
               <div class="flex items-center gap-2">
                 <input type="radio" name="answer_correct" value="<?= $newIdx ?>" class="accent-selcap-600 w-4 h-4 shrink-0">
@@ -225,7 +247,6 @@ require __DIR__ . '/../includes/header.php';
         </div>
       <?php endforeach; ?>
 
-      <!-- Nueva pregunta -->
       <details class="mt-3">
         <summary class="text-selcap-600 font-semibold text-sm cursor-pointer hover:underline">+ Agregar pregunta</summary>
         <form method="POST" class="mt-3 space-y-3">
@@ -252,6 +273,40 @@ require __DIR__ . '/../includes/header.php';
         </form>
       </details>
     </div>
+
+    <!-- Intentos de estudiantes + Feedback -->
+    <?php if ($attempts): ?>
+    <div class="border-t border-gray-100 pt-4 mt-4">
+      <h3 class="font-bold text-gray-700 text-sm mb-3">Intentos de estudiantes (<?= count($attempts) ?>)</h3>
+      <div class="space-y-3">
+        <?php foreach ($attempts as $att): 
+          $hasFeedback = !empty($att['feedback']);
+        ?>
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <p class="text-sm font-semibold text-gray-800"><?= htmlspecialchars($att['first_name'] . ' ' . $att['last_name']) ?></p>
+                <p class="text-xs text-gray-400"><?= htmlspecialchars($att['email']) ?> — <?= $att['submitted_at'] ?></p>
+              </div>
+              <div class="text-right">
+                <p class="text-lg font-extrabold <?= $att['passed'] ? 'text-green-600' : 'text-red-500' ?>"><?= round($att['score']) ?>%</p>
+                <p class="text-xs text-gray-400"><?= $att['passed'] ? '✅ Aprobado' : '❌ Reprobado' ?></p>
+              </div>
+            </div>
+            <form method="POST" class="mt-2">
+              <input type="hidden" name="action" value="save_feedback">
+              <input type="hidden" name="attempt_id" value="<?= $att['id'] ?>">
+              <textarea name="feedback" placeholder="Retroalimentación para el estudiante (solo visible si tiene contenido)..." rows="2"
+                        class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm"><?= htmlspecialchars($att['feedback'] ?? '') ?></textarea>
+              <button type="submit" class="mt-2 bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">
+                <?= $hasFeedback ? 'Actualizar feedback' : 'Guardar feedback' ?>
+              </button>
+            </form>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
   </div>
 <?php endforeach; ?>
 

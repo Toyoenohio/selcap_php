@@ -59,7 +59,8 @@ CREATE TABLE evaluations (
     section_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    max_attempts INT DEFAULT 3,
+    max_attempts INT DEFAULT 1,
+    passing_score INT DEFAULT 80,
     sort_order INT DEFAULT 0,
     FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -114,6 +115,7 @@ CREATE TABLE evaluation_attempts (
     score FLOAT DEFAULT 0,
     passed TINYINT(1) DEFAULT 0,
     answers_snapshot JSON,
+    feedback TEXT,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     submitted_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -172,3 +174,22 @@ INSERT INTO answers (question_id, text, is_correct, sort_order) VALUES
 (3, 'El empleador', 1, 1),
 (3, 'El trabajador', 0, 2),
 (3, 'El gobierno', 0, 3);
+
+-- ═══════════ AUDITORÍA ═══════════
+
+CREATE TABLE audit_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id INT,
+    details JSON,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ═══════════ MIGRACIÓN v2 (ejecutar si la BD ya existe) ═══════════
+-- ALTER TABLE evaluations ADD COLUMN passing_score INT DEFAULT 80 AFTER max_attempts;
+-- ALTER TABLE evaluations MODIFY max_attempts INT DEFAULT 1;
+-- ALTER TABLE evaluation_attempts ADD COLUMN feedback TEXT AFTER answers_snapshot;

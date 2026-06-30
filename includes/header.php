@@ -80,6 +80,16 @@ $currentPage = $currentPage ?? '';
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         Administración
       </a>
+      <a href="<?= BASE_URL ?>/admin/alumnos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+        <?= $currentPage === 'alumnos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+        Alumnos
+      </a>
+      <a href="<?= BASE_URL ?>/admin/reportes.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+        <?= $currentPage === 'reportes' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Reportes
+      </a>
       <?php endif; ?>
     </nav>
 
@@ -119,6 +129,14 @@ $currentPage = $currentPage ?? '';
       <a href="<?= BASE_URL ?>/mis-cursos.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'mis-cursos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📚 Mis Cursos</a>
       <a href="<?= BASE_URL ?>/certificados.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'certificados' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">🏅 Certificados</a>
       <a href="<?= BASE_URL ?>/perfil.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'perfil' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">👤 Perfil</a>
+      <?php if ($isAdmin): ?>
+      <div class="border-t border-gray-100 mt-2 pt-2">
+        <p class="px-4 text-xs text-gray-400 mb-1 uppercase tracking-wide">Administración</p>
+        <a href="<?= BASE_URL ?>/admin/" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'admin' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">⚙️ Secciones</a>
+        <a href="<?= BASE_URL ?>/admin/alumnos.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'alumnos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">👥 Alumnos</a>
+        <a href="<?= BASE_URL ?>/admin/reportes.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'reportes' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📊 Reportes</a>
+      </div>
+      <?php endif; ?>
     </nav>
   </div>
 

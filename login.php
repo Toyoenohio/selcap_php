@@ -5,7 +5,15 @@ if (isLoggedIn()) { header('Location: ' . BASE_URL . '/dashboard.php'); exit; }
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = loginUser($_POST['email'] ?? '', $_POST['password'] ?? '');
-    if ($result['ok']) { header('Location: ' . BASE_URL . '/dashboard.php'); exit; }
+    if ($result['ok']) {
+        // Auditoría
+        try {
+            $pdo = db();
+            $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, details, ip_address) VALUES (?, ?, ?, ?, ?)')
+                ->execute([$_SESSION['user_id'], 'login', 'user', json_encode([]), $_SERVER['REMOTE_ADDR'] ?? '']);
+        } catch (Exception $e) {}
+        header('Location: ' . BASE_URL . '/dashboard.php'); exit;
+    }
     $error = $result['error'];
 }
 $pageTitle = 'Iniciar sesión';
