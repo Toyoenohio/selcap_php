@@ -4,159 +4,112 @@ requireLogin();
 
 $userId = $_SESSION['user_id'];
 $pdo = db();
+$user = currentUser();
 
-// Curso activo
-$courseStmt = $pdo->prepare('SELECT * FROM courses WHERE id = ?');
-$courseStmt->execute([ACTIVE_COURSE_ID]);
-$course = $courseStmt->fetch();
+// Stats
+$enrolledStmt = $pdo->prepare('SELECT COUNT(*) as cnt FROM enrollments WHERE user_id = ? AND status = "active"');
+$enrolledStmt->execute([$userId]);
+$enrolled = (int) $enrolledStmt->fetch()['cnt'];
 
-// Enrolamiento
-$enrStmt = $pdo->prepare('SELECT * FROM enrollments WHERE user_id = ? AND course_id = ?');
-$enrStmt->execute([$userId, ACTIVE_COURSE_ID]);
-$enrollment = $enrStmt->fetch();
+$lessonsStmt = $pdo->prepare('SELECT COUNT(*) as cnt FROM lesson_progress WHERE user_id = ? AND completed = 1');
+$lessonsStmt->execute([$userId]);
+$completedLessons = (int) $lessonsStmt->fetch()['cnt'];
 
-// Secciones con lecciones
-$sectionsStmt = $pdo->prepare('SELECT * FROM sections WHERE course_id = ? ORDER BY sort_order');
-$sectionsStmt->execute([ACTIVE_COURSE_ID]);
-$sections = $sectionsStmt->fetchAll();
+$certsStmt = $pdo->prepare('SELECT COUNT(*) as cnt FROM evaluation_attempts WHERE user_id = ? AND passed = 1');
+$certsStmt->execute([$userId]);
+$certs = (int) $certsStmt->fetch()['cnt'];
 
-// Progreso por sección
-$progressStmt = $pdo->prepare('SELECT lp.lesson_id, lp.completed FROM lesson_progress lp
-    JOIN lessons l ON lp.lesson_id = l.id
-    JOIN sections s ON l.section_id = s.id
-    WHERE lp.user_id = ? AND s.course_id = ?');
-$progressStmt->execute([$userId, ACTIVE_COURSE_ID]);
-$completedLessons = [];
-foreach ($progressStmt->fetchAll() as $row) {
-    if ($row['completed']) $completedLessons[$row['lesson_id']] = true;
-}
+// Cursos enrolados
+$coursesStmt = $pdo->prepare('SELECT c.*, e.status as enroll_status, 
+    (SELECT COUNT(*) FROM lessons l JOIN sections s ON l.section_id = s.id WHERE s.course_id = c.id) as total_lessons,
+    (SELECT COUNT(*) FROM lesson_progress lp JOIN lessons l ON lp.lesson_id = l.id JOIN sections s ON l.section_id = s.id WHERE lp.user_id = ? AND s.course_id = c.id AND lp.completed = 1) as done_lessons
+    FROM courses c 
+    JOIN enrollments e ON e.course_id = c.id 
+    WHERE e.user_id = ? AND e.status = "active"
+    ORDER BY e.enrolled_at DESC');
+$coursesStmt->execute([$userId, $userId]);
+$courses = $coursesStmt->fetchAll();
 
-// Lecciones por sección (1 query para evitar N+1)
-$lessonsStmt = $pdo->prepare('SELECT l.*, s.id as section_id FROM lessons l
-    JOIN sections s ON l.section_id = s.id
-    WHERE s.course_id = ?
-    ORDER BY s.sort_order, l.sort_order');
-$lessonsStmt->execute([ACTIVE_COURSE_ID]);
-$lessonsBySection = [];
-foreach ($lessonsStmt->fetchAll() as $l) {
-    $lessonsBySection[$l['section_id']][] = $l;
-}
-
-// Evaluaciones por sección
-$evalsStmt = $pdo->prepare('SELECT e.*, s.id as section_id FROM evaluations e
-    JOIN sections s ON e.section_id = s.id
-    WHERE s.course_id = ?
-    ORDER BY s.sort_order, e.sort_order');
-$evalsStmt->execute([ACTIVE_COURSE_ID]);
-$evalsBySection = [];
-foreach ($evalsStmt->fetchAll() as $e) {
-    // Último intento
-    $attStmt = $pdo->prepare('SELECT * FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ? ORDER BY attempt_number DESC LIMIT 1');
-    $attStmt->execute([$userId, $e['id']]);
-    $e['last_attempt'] = $attStmt->fetch();
-    $evalsBySection[$e['section_id']][] = $e;
-}
-
-$pageTitle = $course['title'] ?? 'Aula Virtual';
+$currentPage = 'dashboard';
+$pageTitle = 'Panel';
 require __DIR__ . '/includes/header.php';
 ?>
 
-<div class="mb-6">
-  <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900"><?= htmlspecialchars($course['title'] ?? 'Aula Virtual') ?></h1>
-  <p class="text-gray-500 text-sm mt-1"><?= htmlspecialchars($course['description'] ?? '') ?></p>
+<h1 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-1">¡Hola, <?= htmlspecialchars($user['first_name']) ?>!</h1>
+<p class="text-gray-500 text-sm mb-6">Bienvenido al aula virtual. Aquí tienes un resumen de tu progreso.</p>
+
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex items-center gap-4">
+    <div class="w-12 h-12 bg-selcap-100 rounded-xl flex items-center justify-center shrink-0">
+      <svg class="w-6 h-6 text-selcap-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+    </div>
+    <div>
+      <p class="text-2xl font-extrabold text-gray-900"><?= $enrolled ?></p>
+      <p class="text-sm text-gray-500">Cursos Inscritos</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex items-center gap-4">
+    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+      <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div>
+      <p class="text-2xl font-extrabold text-gray-900"><?= $completedLessons ?></p>
+      <p class="text-sm text-gray-500">Lecciones Completadas</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex items-center gap-4">
+    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+      <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+    </div>
+    <div>
+      <p class="text-2xl font-extrabold text-gray-900"><?= $certs ?></p>
+      <p class="text-sm text-gray-500">Evaluaciones Aprobadas</p>
+    </div>
+  </div>
 </div>
 
-<?php if (!$enrollment): ?>
-  <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center text-sm">
-    <form method="POST" action="<?= BASE_URL ?>/enroll.php">
-      <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors">
-        Inscribirme al curso
-      </button>
-    </form>
+<!-- Continuar aprendiendo -->
+<div class="mb-8">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-bold text-gray-900">Continuar aprendiendo</h2>
+    <a href="<?= BASE_URL ?>/catalogo.php" class="text-sm font-semibold text-selcap-600 hover:text-selcap-700">Ver todos los cursos →</a>
   </div>
-<?php else: ?>
 
-  <div class="space-y-4">
-    <?php foreach ($sections as $sec): 
-      $lessons = $lessonsBySection[$sec['id']] ?? [];
-      $evals = $evalsBySection[$sec['id']] ?? [];
-      $totalL = count($lessons);
-      $doneL = 0;
-      foreach ($lessons as $l) { if (isset($completedLessons[$l['id']])) $doneL++; }
-      $pct = $totalL > 0 ? round($doneL / $totalL * 100) : 0;
-    ?>
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-bold text-gray-900 text-lg"><?= htmlspecialchars($sec['title']) ?></h2>
-          <span class="text-xs font-semibold <?= $pct === 100 ? 'text-green-600' : 'text-selcap-600' ?>">
-            <?= $doneL ?>/<?= $totalL ?>
-          </span>
-        </div>
-
-        <?php if ($sec['description']): ?>
-          <p class="text-gray-500 text-sm mb-3"><?= htmlspecialchars($sec['description']) ?></p>
-        <?php endif; ?>
-
-        <!-- Barra de progreso -->
-        <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
-          <div class="h-2 rounded-full transition-all duration-500 <?= $pct === 100 ? 'bg-green-500' : 'bg-selcap-500' ?>" style="width:<?= $pct ?>%"></div>
-        </div>
-
-        <!-- Lecciones -->
-        <div class="space-y-1.5">
-          <?php foreach ($lessons as $l): 
-            $isDone = isset($completedLessons[$l['id']]);
-          ?>
-            <a href="<?= BASE_URL ?>/lesson.php?id=<?= $l['id'] ?>"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-              <span class="w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0
-                <?= $isDone ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400 group-hover:bg-selcap-100 group-hover:text-selcap-600' ?>">
-                <?= $isDone ? '✓' : ($course['is_sequential'] && $l['sort_order'] > 1 && !isset($completedLessons[$lessons[$l['sort_order']-2]['id']]) ? '🔒' : '▶') ?>
-              </span>
-              <span class="text-sm font-medium <?= $isDone ? 'text-gray-500' : 'text-gray-800' ?>">
-                <?= htmlspecialchars($l['title']) ?>
-              </span>
-            </a>
-          <?php endforeach; ?>
-        </div>
-
-        <!-- Evaluaciones -->
-        <?php if ($evals): ?>
-          <div class="mt-4 pt-3 border-t border-gray-100">
-            <?php foreach ($evals as $ev): 
-              $last = $ev['last_attempt'];
-              $attempts = $last ? $pdo->prepare('SELECT COUNT(*) FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ?')->execute([$userId, $ev['id']]) : 0;
-              // Contar intentos
-              $cntStmt = $pdo->prepare('SELECT COUNT(*) as cnt FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ?');
-              $cntStmt->execute([$userId, $ev['id']]);
-              $attemptCount = (int) $cntStmt->fetch()['cnt'];
-              $maxed = $attemptCount >= $ev['max_attempts'];
-            ?>
-              <div class="flex items-center justify-between px-3 py-2">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm">📝</span>
-                  <span class="text-sm font-medium text-gray-700"><?= htmlspecialchars($ev['title']) ?></span>
-                  <?php if ($last): ?>
-                    <span class="text-xs <?= $last['passed'] ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50' ?> px-2 py-0.5 rounded-full font-semibold">
-                      <?= round($last['score']) ?>% <?= $last['passed'] ? '✓' : '✗' ?>
-                    </span>
-                  <?php endif; ?>
-                </div>
-                <?php if (!$maxed || ($last && !$last['passed'])): ?>
-                  <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $ev['id'] ?>" class="text-xs font-semibold text-selcap-600 hover:underline">
-                    <?= $attemptCount > 0 ? 'Reintentar' : 'Comenzar' ?> (<?= $ev['max_attempts'] - $attemptCount ?> disponible<?= $ev['max_attempts'] - $attemptCount !== 1 ? 's' : '' ?>)
-                  </a>
-                <?php else: ?>
-                  <span class="text-xs text-gray-400">Sin intentos</span>
-                <?php endif; ?>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+  <?php if (empty($courses)): ?>
+    <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
+      <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
       </div>
-    <?php endforeach; ?>
-  </div>
-
-<?php endif; ?>
+      <p class="text-gray-500 font-medium mb-2">Aún no estás inscrito en ningún curso.</p>
+      <a href="<?= BASE_URL ?>/catalogo.php" class="text-selcap-600 font-semibold text-sm hover:underline">Explorar catálogo de cursos</a>
+    </div>
+  <?php else: ?>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <?php foreach ($courses as $course): 
+        $pct = $course['total_lessons'] > 0 ? round($course['done_lessons'] / $course['total_lessons'] * 100) : 0;
+      ?>
+        <a href="<?= BASE_URL ?>/curso.php?id=<?= $course['id'] ?>" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-selcap-200 transition-all group">
+          <div class="flex items-start gap-4">
+            <div class="w-16 h-16 bg-selcap-50 rounded-xl flex items-center justify-center shrink-0 text-2xl">
+              📚
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-900 mb-1 group-hover:text-selcap-600 transition-colors"><?= htmlspecialchars($course['title']) ?></h3>
+              <p class="text-sm text-gray-500 line-clamp-2 mb-3"><?= htmlspecialchars($course['description'] ?? '') ?></p>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 bg-gray-100 rounded-full h-2">
+                  <div class="h-2 rounded-full bg-selcap-500 transition-all" style="width:<?= $pct ?>%"></div>
+                </div>
+                <span class="text-xs font-semibold text-gray-500 shrink-0"><?= $pct ?>%</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1"><?= $course['done_lessons'] ?>/<?= $course['total_lessons'] ?> lecciones</p>
+            </div>
+          </div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</div>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

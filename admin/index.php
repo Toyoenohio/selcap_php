@@ -41,6 +41,7 @@ $sectionsStmt->execute([ACTIVE_COURSE_ID]);
 $sections = $sectionsStmt->fetchAll();
 
 $pageTitle = 'Admin — Secciones';
+$currentPage = 'admin';
 require __DIR__ . '/../includes/header.php';
 ?>
 
