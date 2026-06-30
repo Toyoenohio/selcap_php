@@ -18,7 +18,7 @@ $isAdmin = $user && $user['role'] === 'admin';
       theme: {
         extend: {
           colors: {
-            selcap: { 50:'#f0f7ff', 100:'#e0effe', 500:'#2563eb', 600:'#1d4ed8', 700:'#1e40af' }
+            selcap: { 50:'#f0fdfa', 100:'#ccfbf1', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e' }
           }
         }
       }
