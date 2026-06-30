@@ -44,7 +44,7 @@ $isAdmin = $user && $user['role'] === 'admin';
       <div class="w-9 h-9 bg-selcap-500 rounded-lg flex items-center justify-center">
         <span class="text-white font-extrabold text-sm">AV</span>
       </div>
-      <span class="font-bold text-gray-800 text-lg">Selcap AV</span>
+      <span class="font-bold text-gray-800 text-lg">Selcap AV — Aquamarina 🌿</span>
     </a>
     <div class="flex items-center gap-3">
       <?php if ($isAdmin): ?>
