@@ -116,12 +116,10 @@ require __DIR__ . '/includes/header.php';
       <h3 class="font-semibold text-gray-700 text-sm mb-3">📎 Archivos adjuntos</h3>
       <div class="space-y-2">
         <?php foreach ($attachments as $att): 
-          $icon = match(true) {
-            str_contains($att['file_type'], 'pdf') => '📄',
-            str_contains($att['file_type'], 'image') => '🖼️',
-            str_contains($att['file_type'], 'video') => '🎬',
-            default => '📁'
-          };
+          $icon = '📁';
+          if (strpos($att['file_type'], 'pdf') !== false) $icon = '📄';
+          elseif (strpos($att['file_type'], 'image') !== false) $icon = '🖼️';
+          elseif (strpos($att['file_type'], 'video') !== false) $icon = '🎬';
           $size = $att['file_size'] > 1024*1024 ? round($att['file_size']/1024/1024, 1).' MB' : round($att['file_size']/1024, 1).' KB';
         ?>
           <a href="<?= htmlspecialchars($att['file_url']) ?>" download
