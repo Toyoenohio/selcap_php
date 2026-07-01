@@ -191,6 +191,19 @@ CREATE TABLE audit_log (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ═══════════ MATERIALES ═══════════
+
+CREATE TABLE course_materials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    file_type VARCHAR(100),
+    file_size INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ═══════════ MIGRACIÓN v2 (ejecutar si la BD ya existe) ═══════════
 -- ALTER TABLE evaluations ADD COLUMN passing_score INT DEFAULT 80 AFTER max_attempts;
 -- ALTER TABLE evaluations MODIFY max_attempts INT DEFAULT 1;
@@ -202,3 +215,15 @@ CREATE TABLE audit_log (
 
 -- ═══════════ MIGRACIÓN v4 — Clases en vivo ═══════════
 -- ALTER TABLE lessons ADD COLUMN live_url VARCHAR(500) AFTER video_url;
+
+-- ═══════════ MIGRACIÓN v5 — Materiales de curso ═══════════
+-- CREATE TABLE IF NOT EXISTS course_materials (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     course_id INT NOT NULL,
+--     file_name VARCHAR(255) NOT NULL,
+--     file_url VARCHAR(500) NOT NULL,
+--     file_type VARCHAR(100),
+--     file_size INT DEFAULT 0,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -73,7 +73,7 @@ require __DIR__ . '/../includes/header.php';
              class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
     <textarea name="description" placeholder="Descripción (opcional)" rows="2"
-              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500"></textarea>
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear sección</button>
   </form>
 </div>
@@ -92,7 +92,7 @@ require __DIR__ . '/../includes/header.php';
                  class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
         </div>
         <textarea name="description" rows="2"
-                  class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"><?= htmlspecialchars($sec['description'] ?? '') ?></textarea>
+                  class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($sec['description'] ?? '') ?></textarea>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4 text-xs text-gray-400">
             <span><?= $sec['lesson_count'] ?> lecciones</span>

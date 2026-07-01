@@ -137,7 +137,7 @@ require __DIR__ . '/../includes/header.php';
       <div><label class="text-xs text-gray-400 block mb-1">% Aprobación</label><input type="number" name="passing_score" value="80" min="0" max="100" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500"></div>
       <input type="number" name="sort_order" placeholder="Orden" value="0" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
-    <textarea name="description" placeholder="Descripción" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500"></textarea>
+    <textarea name="description" placeholder="Descripción" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear evaluación</button>
   </form>
 </div>
@@ -157,7 +157,7 @@ require __DIR__ . '/../includes/header.php';
       <div><label class="text-xs text-gray-400 block mb-1">% Aprobación</label><input type="number" name="passing_score" value="<?= $ev['passing_score']??80 ?>" min="0" max="100" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"></div>
       <input type="number" name="sort_order" value="<?= $ev['sort_order'] ?>" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
     </div>
-    <textarea name="description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"><?= htmlspecialchars($ev['description']??'') ?></textarea>
+    <textarea name="description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($ev['description']??'') ?></textarea>
     <div class="flex items-center gap-2">
       <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
       <form method="POST" onsubmit="return confirm('¿Eliminar?')" class="inline"><input type="hidden" name="action" value="delete_evaluation"><input type="hidden" name="id" value="<?= $ev['id'] ?>"><button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button></form>

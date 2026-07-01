@@ -112,6 +112,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         }
                     }
                 }
+                // Copiar materiales del curso (compartir archivos — misma URL)
+                $matStmt = $pdo->prepare('SELECT * FROM course_materials WHERE course_id=?');
+                $matStmt->execute([$srcId]);
+                foreach ($matStmt->fetchAll() as $mat) {
+                    $pdo->prepare('INSERT INTO course_materials (course_id, file_name, file_url, file_type, file_size) VALUES (?, ?, ?, ?, ?)')
+                        ->execute([$newCourseId, $mat['file_name'], $mat['file_url'], $mat['file_type'], $mat['file_size']]);
+                }
                 $pdo->commit();
                 $msg = "Curso duplicado: $newTitle"; $msgType = 'green';
             } catch (Exception $e) {
@@ -172,7 +179,7 @@ require __DIR__ . '/../includes/header.php';
       </label>
     </div>
     <textarea name="description" placeholder="Descripción" rows="2"
-              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500"></textarea>
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear curso</button>
   </form>
 </details>
@@ -212,6 +219,7 @@ require __DIR__ . '/../includes/header.php';
       <div class="border-t border-gray-100 px-5 py-3 flex items-center gap-2 flex-wrap">
         <button onclick="toggleEdit(<?= $c['id'] ?>)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Editar</button>
         <a href="<?= BASE_URL ?>/admin/sections.php?course_id=<?= $c['id'] ?>" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Secciones →</a>
+        <a href="<?= BASE_URL ?>/admin/materials.php?course_id=<?= $c['id'] ?>" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">📁 Materiales</a>
         <a href="<?= BASE_URL ?>/curso.php?id=<?= $c['id'] ?>" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Ver curso</a>
 
         <!-- Duplicar -->
@@ -255,7 +263,7 @@ require __DIR__ . '/../includes/header.php';
             </label>
           </div>
           <textarea name="description" rows="2"
-                    class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"><?= htmlspecialchars($c['description']??'') ?></textarea>
+                    class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($c['description']??'') ?></textarea>
           <div class="flex gap-2">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar cambios</button>
             <button type="button" onclick="toggleEdit(<?= $c['id'] ?>)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Cancelar</button>

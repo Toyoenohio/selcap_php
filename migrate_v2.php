@@ -49,6 +49,18 @@ safeExec($pdo, "UPDATE courses SET sku = 'FUND-SEG-IND' WHERE id = 1 AND sku IS 
 // ── v4: Clases en vivo ──
 safeExec($pdo, "ALTER TABLE lessons ADD COLUMN live_url VARCHAR(500) AFTER video_url", 'live_url en lessons');
 
+// ── v5: Materiales de curso ──
+safeExec($pdo, "CREATE TABLE IF NOT EXISTS course_materials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    file_type VARCHAR(100),
+    file_size INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", 'tabla course_materials');
+
 $allOk = !in_array(false, array_map(fn($r) => !str_starts_with($r, '❌'), $results), true);
 ?>
 <!DOCTYPE html>

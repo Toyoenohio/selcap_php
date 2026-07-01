@@ -132,8 +132,8 @@ require __DIR__ . '/../includes/header.php';
       <input type="text" name="title" placeholder="Título" required
              class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
-    <textarea name="content_html" placeholder="Contenido HTML" rows="4"
-              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-mono text-sm"></textarea>
+    <textarea name="content_html" placeholder="Contenido HTML" rows="6"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-mono text-sm wysiwyg"></textarea>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <input type="text" name="video_url" placeholder="URL video (YouTube)"
              class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
@@ -167,7 +167,7 @@ require __DIR__ . '/../includes/header.php';
                  class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-medium">
         </div>
         <textarea name="content_html" rows="3"
-                  class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-mono text-xs"><?= htmlspecialchars($l['content_html'] ?? '') ?></textarea>
+                  class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-mono text-xs wysiwyg"><?= htmlspecialchars($l['content_html'] ?? '') ?></textarea>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input type="text" name="video_url" value="<?= htmlspecialchars($l['video_url'] ?? '') ?>" placeholder="URL video"
                  class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">

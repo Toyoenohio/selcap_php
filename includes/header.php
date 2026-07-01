@@ -11,6 +11,30 @@ $currentPage = $currentPage ?? '';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= $pageTitle ?? 'Selcap AV' ?> — Aula Virtual</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <?php if ($isAdmin): ?>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/7.6.0/tinymce.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      tinymce.init({
+        selector: 'textarea.wysiwyg',
+        height: 300,
+        menubar: false,
+        plugins: 'lists link image table code',
+        toolbar: 'undo redo | bold italic underline | bullist numlist | link | table | removeformat | code',
+        content_style: 'body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; }'
+      });
+      // Mini editor para descripciones
+      tinymce.init({
+        selector: 'textarea.wysiwyg-sm',
+        height: 150,
+        menubar: false,
+        plugins: 'lists link',
+        toolbar: 'undo redo | bold italic | bullist numlist | link | removeformat',
+        content_style: 'body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; }'
+      });
+    });
+  </script>
+  <?php endif; ?>
   <script>
     tailwind.config = {
       theme: {
