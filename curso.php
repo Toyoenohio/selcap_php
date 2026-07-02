@@ -77,6 +77,16 @@ require __DIR__ . '/includes/header.php';
       <?php if ($sec['description']): ?>
         <p class="text-gray-500 text-sm mb-3"><?= htmlspecialchars($sec['description']) ?></p>
       <?php endif; ?>
+      <?php if (!empty($sec['live_url'])): ?>
+        <div class="mb-4 rounded-xl overflow-hidden border-2 border-red-200 bg-red-50/30">
+          <div class="px-3 py-1.5 bg-red-500 text-white flex items-center gap-2 text-xs font-semibold">
+            <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span> 🔴 CLASE EN VIVO
+          </div>
+          <div class="aspect-video">
+            <iframe src="<?= htmlspecialchars($sec['live_url']) ?>" class="w-full h-full" frameborder="0" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+          </div>
+        </div>
+      <?php endif; ?>
       <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
         <div class="h-2 rounded-full transition-all <?= $pct === 100 ? 'bg-green-500' : 'bg-selcap-500' ?>" style="width:<?= $pct ?>%"></div>
       </div>

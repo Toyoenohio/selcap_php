@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $secStmt = $pdo->prepare('SELECT * FROM sections WHERE course_id=? ORDER BY sort_order');
                 $secStmt->execute([$srcId]);
                 foreach ($secStmt->fetchAll() as $sec) {
-                    $pdo->prepare('INSERT INTO sections (course_id, title, description, sort_order) VALUES (?, ?, ?, ?)')
-                        ->execute([$newCourseId, $sec['title'], $sec['description'], $sec['sort_order']]);
+                    $pdo->prepare('INSERT INTO sections (course_id, title, description, live_url, sort_order) VALUES (?, ?, ?, ?, ?)')
+                        ->execute([$newCourseId, $sec['title'], $sec['description'], $sec['live_url'], $sec['sort_order']]);
                     $newSecId = (int)$pdo->lastInsertId();
 
                     // Lecciones

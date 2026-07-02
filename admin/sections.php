@@ -17,12 +17,12 @@ if (!$course) { header('Location: ' . BASE_URL . '/admin/courses.php'); exit; }
 // ── Acciones ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'create_section') {
-        $pdo->prepare('INSERT INTO sections (course_id, title, description, sort_order) VALUES (?, ?, ?, ?)')
-            ->execute([$courseId, trim($_POST['title']), trim($_POST['description'] ?? ''), $_POST['sort_order'] ?? 0]);
+        $pdo->prepare('INSERT INTO sections (course_id, title, description, live_url, sort_order) VALUES (?, ?, ?, ?, ?)')
+            ->execute([$courseId, trim($_POST['title']), trim($_POST['description'] ?? ''), trim($_POST['live_url'] ?? '') ?: null, $_POST['sort_order'] ?? 0]);
         $msg = 'Sección creada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'update_section') {
-        $pdo->prepare('UPDATE sections SET title=?, description=?, sort_order=? WHERE id=? AND course_id=?')
-            ->execute([trim($_POST['title']), trim($_POST['description'] ?? ''), $_POST['sort_order'] ?? 0, (int)$_POST['id'], $courseId]);
+        $pdo->prepare('UPDATE sections SET title=?, description=?, live_url=?, sort_order=? WHERE id=? AND course_id=?')
+            ->execute([trim($_POST['title']), trim($_POST['description'] ?? ''), trim($_POST['live_url'] ?? '') ?: null, $_POST['sort_order'] ?? 0, (int)$_POST['id'], $courseId]);
         $msg = 'Sección actualizada.'; $msgType = 'blue';
     } elseif ($_POST['action'] === 'delete_section') {
         $pdo->prepare('DELETE FROM sections WHERE id=? AND course_id=?')->execute([(int)$_POST['id'], $courseId]);
@@ -74,6 +74,10 @@ require __DIR__ . '/../includes/header.php';
     </div>
     <textarea name="description" placeholder="Descripción (opcional)" rows="2"
               class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <input type="text" name="live_url" placeholder="URL clase en vivo (Zoom/Meet) — opcional"
+             class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+    </div>
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear sección</button>
   </form>
 </div>
@@ -93,6 +97,8 @@ require __DIR__ . '/../includes/header.php';
         </div>
         <textarea name="description" rows="2"
                   class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($sec['description'] ?? '') ?></textarea>
+        <input type="text" name="live_url" value="<?= htmlspecialchars($sec['live_url'] ?? '') ?>" placeholder="URL clase en vivo (Zoom/Meet)"
+               class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4 text-xs text-gray-400">
             <span><?= $sec['lesson_count'] ?> lecciones</span>

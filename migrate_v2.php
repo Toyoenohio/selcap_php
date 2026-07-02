@@ -16,7 +16,6 @@ function safeExec($pdo, $sql, $label) {
         $results[] = "✅ $label";
         return true;
     } catch (PDOException $e) {
-        // 1060 = Duplicate column, 1050 = Table exists — ok
         if (in_array($e->getCode(), ['42S21', '42S01', '42S22'])) {
             $results[] = "⏭️ $label (ya existe)";
             return true;
@@ -42,14 +41,11 @@ safeExec($pdo, "CREATE TABLE IF NOT EXISTS audit_log (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", 'tabla audit_log');
 
-// ── v3: SKU para cursos ──
 safeExec($pdo, "ALTER TABLE courses ADD COLUMN sku VARCHAR(100) UNIQUE AFTER thumbnail_url", 'sku en courses');
 safeExec($pdo, "UPDATE courses SET sku = 'FUND-SEG-IND' WHERE id = 1 AND sku IS NULL", 'sku curso demo');
 
-// ── v4: Clases en vivo ──
 safeExec($pdo, "ALTER TABLE lessons ADD COLUMN live_url VARCHAR(500) AFTER video_url", 'live_url en lessons');
 
-// ── v5: Materiales de curso ──
 safeExec($pdo, "CREATE TABLE IF NOT EXISTS course_materials (
     id INT AUTO_INCREMENT PRIMARY KEY,
     course_id INT NOT NULL,
@@ -60,6 +56,8 @@ safeExec($pdo, "CREATE TABLE IF NOT EXISTS course_materials (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", 'tabla course_materials');
+
+safeExec($pdo, "ALTER TABLE sections ADD COLUMN live_url VARCHAR(500) AFTER description", 'live_url en sections');
 
 $allOk = !in_array(false, array_map(fn($r) => !str_starts_with($r, '❌'), $results), true);
 ?>

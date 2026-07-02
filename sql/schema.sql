@@ -31,6 +31,7 @@ CREATE TABLE sections (
     course_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    live_url VARCHAR(500),
     sort_order INT DEFAULT 0,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
