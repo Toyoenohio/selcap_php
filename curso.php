@@ -77,14 +77,26 @@ require __DIR__ . '/includes/header.php';
       <?php if ($sec['description']): ?>
         <p class="text-gray-500 text-sm mb-3"><?= htmlspecialchars($sec['description']) ?></p>
       <?php endif; ?>
-      <?php if (!empty($sec['live_url'])): ?>
+      <?php if (!empty($sec['live_url'])): 
+        $isZoomMeet = strpos($sec['live_url'], 'zoom.us') !== false || strpos($sec['live_url'], 'meet.google.com') !== false;
+      ?>
         <div class="mb-4 rounded-xl overflow-hidden border-2 border-red-200 bg-red-50/30">
           <div class="px-3 py-1.5 bg-red-500 text-white flex items-center gap-2 text-xs font-semibold">
             <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span> 🔴 CLASE EN VIVO
           </div>
-          <div class="aspect-video">
-            <iframe src="<?= htmlspecialchars($sec['live_url']) ?>" class="w-full h-full" frameborder="0" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
-          </div>
+          <?php if ($isZoomMeet): ?>
+            <div class="p-6 text-center">
+              <p class="text-sm text-gray-600 mb-4">Zoom / Meet no permite incrustar en otra web. Usa el botón:</p>
+              <a href="<?= htmlspecialchars($sec['live_url']) ?>" target="_blank" rel="noopener"
+                 class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition-colors text-base">
+                🔴 Unirse a la clase en vivo →
+              </a>
+            </div>
+          <?php else: ?>
+            <div class="aspect-video">
+              <iframe src="<?= htmlspecialchars($sec['live_url']) ?>" class="w-full h-full" frameborder="0" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+            </div>
+          <?php endif; ?>
         </div>
       <?php endif; ?>
       <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
