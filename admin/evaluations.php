@@ -160,9 +160,9 @@ require __DIR__ . '/../includes/header.php';
     <textarea name="description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($ev['description']??'') ?></textarea>
     <div class="flex items-center gap-2">
       <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
-      <form method="POST" onsubmit="return confirm('¿Eliminar?')" class="inline"><input type="hidden" name="action" value="delete_evaluation"><input type="hidden" name="id" value="<?= $ev['id'] ?>"><button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button></form>
     </div>
   </form>
+  <form method="POST" onsubmit="return confirm('¿Eliminar?')" class="inline mt-2"><input type="hidden" name="action" value="delete_evaluation"><input type="hidden" name="id" value="<?= $ev['id'] ?>"><button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button></form>
 
   <!-- Preguntas -->
   <div class="border-t border-gray-100 pt-4">
@@ -188,9 +188,9 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div class="flex items-center gap-2">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-2 rounded-lg transition-colors text-xs">Guardar</button>
-            <form method="POST" onsubmit="return confirm('¿Eliminar?')" class="inline"><input type="hidden" name="action" value="delete_question"><input type="hidden" name="q_id" value="<?= $q['id'] ?>"><button type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold">Eliminar</button></form>
           </div>
         </form>
+        <form method="POST" onsubmit="return confirm('¿Eliminar?')" class="inline mt-1"><input type="hidden" name="action" value="delete_question"><input type="hidden" name="q_id" value="<?= $q['id'] ?>"><button type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold">Eliminar</button></form>
       </div>
     <?php endforeach; ?>
     <details class="mt-3"><summary class="text-selcap-600 font-semibold text-sm cursor-pointer hover:underline">+ Agregar pregunta</summary>

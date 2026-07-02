@@ -108,13 +108,13 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div class="flex items-center gap-2">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
-            <form method="POST" onsubmit="return confirm('¿Eliminar esta sección?')" class="inline">
-              <input type="hidden" name="action" value="delete_section">
-              <input type="hidden" name="id" value="<?= $sec['id'] ?>">
-              <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button>
-            </form>
           </div>
         </div>
+      </form>
+      <form method="POST" onsubmit="return confirm('¿Eliminar esta sección?')" class="inline mt-2">
+        <input type="hidden" name="action" value="delete_section">
+        <input type="hidden" name="id" value="<?= $sec['id'] ?>">
+        <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button>
       </form>
     </div>
   <?php endforeach; ?>
