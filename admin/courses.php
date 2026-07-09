@@ -54,23 +54,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $pdo->prepare('DELETE FROM lesson_progress WHERE lesson_id=?')->execute([$lesId]);
                 }
                 $pdo->prepare('DELETE FROM lessons WHERE section_id=?')->execute([$secId]);
-
-                // 1b. Evaluaciones del section → attempts → questions → answers → evaluations
-                $evals = $pdo->prepare('SELECT id FROM evaluations WHERE section_id=?');
-                $evals->execute([$secId]);
-                $evalIds = $evals->fetchAll(PDO::FETCH_COLUMN);
-                foreach ($evalIds as $evalId) {
-                    $pdo->prepare('DELETE FROM evaluation_attempts WHERE evaluation_id=?')->execute([$evalId]);
-                    $questions = $pdo->prepare('SELECT id FROM questions WHERE evaluation_id=?');
-                    $questions->execute([$evalId]);
-                    $qIds = $questions->fetchAll(PDO::FETCH_COLUMN);
-                    foreach ($qIds as $qId) {
-                        $pdo->prepare('DELETE FROM answers WHERE question_id=?')->execute([$qId]);
-                    }
-                    $pdo->prepare('DELETE FROM questions WHERE evaluation_id=?')->execute([$evalId]);
-                }
-                $pdo->prepare('DELETE FROM evaluations WHERE section_id=?')->execute([$secId]);
             }
+
+            // 1b. Evaluaciones del curso → attempts → questions → answers
+            $evals = $pdo->prepare('SELECT id FROM evaluations WHERE course_id=?');
+            $evals->execute([$id]);
+            $evalIds = $evals->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($evalIds as $evalId) {
+                $pdo->prepare('DELETE FROM evaluation_attempts WHERE evaluation_id=?')->execute([$evalId]);
+                $questions = $pdo->prepare('SELECT id FROM questions WHERE evaluation_id=?');
+                $questions->execute([$evalId]);
+                $qIds = $questions->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($qIds as $qId) {
+                    $pdo->prepare('DELETE FROM answers WHERE question_id=?')->execute([$qId]);
+                }
+                $pdo->prepare('DELETE FROM questions WHERE evaluation_id=?')->execute([$evalId]);
+            }
+            $pdo->prepare('DELETE FROM evaluations WHERE course_id=?')->execute([$id]);
 
             // 2. Eliminar secciones
             $pdo->prepare('DELETE FROM sections WHERE course_id=?')->execute([$id]);
@@ -134,8 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $evStmt = $pdo->prepare('SELECT * FROM evaluations WHERE section_id=? ORDER BY sort_order');
                     $evStmt->execute([$sec['id']]);
                     foreach ($evStmt->fetchAll() as $ev) {
-                        $pdo->prepare('INSERT INTO evaluations (section_id, title, description, max_attempts, passing_score, sort_order) VALUES (?, ?, ?, ?, ?, ?)')
-                            ->execute([$newSecId, $ev['title'], $ev['description'], $ev['max_attempts'], $ev['passing_score'], $ev['sort_order']]);
+                        $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)')
+                            ->execute([$newCourseId, $newSecId, $ev['title'], $ev['description'], $ev['max_attempts'], $ev['passing_score'], $ev['sort_order']]);
                         $newEvId = (int)$pdo->lastInsertId();
 
                         // Preguntas
@@ -264,6 +264,7 @@ require __DIR__ . '/../includes/header.php';
       <div class="border-t border-gray-100 px-5 py-3 flex items-center gap-2 flex-wrap">
         <button onclick="toggleEdit(<?= $c['id'] ?>)" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Editar</button>
         <a href="<?= BASE_URL ?>/admin/sections.php?course_id=<?= $c['id'] ?>" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Secciones →</a>
+        <a href="<?= BASE_URL ?>/admin/evaluations.php?course_id=<?= $c['id'] ?>" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Evaluaciones</a>
         <a href="<?= BASE_URL ?>/admin/materials.php?course_id=<?= $c['id'] ?>" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">📁 Materiales</a>
         <a href="<?= BASE_URL ?>/curso.php?id=<?= $c['id'] ?>" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Ver curso</a>
 

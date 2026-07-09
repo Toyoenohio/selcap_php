@@ -5,25 +5,29 @@ requireAdmin();
 $pdo = db();
 $msg = ''; $msgType = '';
 
-$sectionId = (int)($_GET['section_id'] ?? 0);
-$section = null; $course = null;
+$courseId = (int)($_GET['course_id'] ?? 0);
+$course = null;
+$sections = [];
 
-if ($sectionId) {
-    $secStmt = $pdo->prepare('SELECT s.*, c.id as course_id, c.title as course_title FROM sections s JOIN courses c ON s.course_id=c.id WHERE s.id=?');
-    $secStmt->execute([$sectionId]);
-    $section = $secStmt->fetch();
-    if ($section) $course = ['id' => $section['course_id'], 'title' => $section['course_title']];
+if ($courseId) {
+    $cStmt = $pdo->prepare('SELECT * FROM courses WHERE id=?');
+    $cStmt->execute([$courseId]);
+    $course = $cStmt->fetch();
+    if (!$course) { header('Location: ' . BASE_URL . '/admin/courses.php'); exit; }
+    $sStmt = $pdo->prepare('SELECT * FROM sections WHERE course_id=? ORDER BY sort_order');
+    $sStmt->execute([$courseId]);
+    $sections = $sStmt->fetchAll();
 }
 
 // Acciones
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'create_evaluation') {
-        $stmt = $pdo->prepare('INSERT INTO evaluations (section_id, title, description, max_attempts, passing_score, sort_order) VALUES (?, ?, ?, 1, ?, ?)');
-        $stmt->execute([(int)$_POST['section_id'], trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0]);
+        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order) VALUES (?, ?, ?, ?, 1, ?, ?)');
+        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0]);
         $msg = 'Evaluación creada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'update_evaluation') {
         $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=? WHERE id=?')
-            ->execute([(int)$_POST['section_id'], trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, (int)$_POST['id']]);
+            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, (int)$_POST['id']]);
         $msg = 'Evaluación actualizada.'; $msgType = 'blue';
     } elseif ($_POST['action'] === 'delete_evaluation') {
         $pdo->prepare('DELETE FROM evaluations WHERE id=?')->execute([(int)$_POST['id']]);
@@ -63,72 +67,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Secciones para el selector
-$sections = [];
-if ($sectionId && $section) {
-    $sectionsStmt = $pdo->prepare('SELECT * FROM sections WHERE course_id=? ORDER BY sort_order');
-    $sectionsStmt->execute([$section['course_id']]);
-    $sections = $sectionsStmt->fetchAll();
-    $whereFilter = 'WHERE e.section_id IN (SELECT id FROM sections WHERE course_id=' . (int)$section['course_id'] . ')';
-    if ($sectionId) $whereFilter = 'WHERE e.section_id=' . $sectionId;
-} else {
-    $sectionsStmt = $pdo->prepare('SELECT s.*, c.title as course_title FROM sections s JOIN courses c ON s.course_id=c.id ORDER BY c.title, s.sort_order');
-    $sectionsStmt->execute();
-    $sections = $sectionsStmt->fetchAll();
-    $whereFilter = '';
-}
-
-// Evaluaciones
-$evalsStmt = $pdo->prepare("SELECT e.*, s.title as section_title FROM evaluations e JOIN sections s ON e.section_id=s.id $whereFilter ORDER BY s.sort_order, e.sort_order");
-$evalsStmt->execute();
-$evaluations = $evalsStmt->fetchAll();
-
-// Preguntas, respuestas, intentos
+// Evaluaciones por curso
+$evaluations = [];
 $allQ = []; $allA = []; $attemptsByEval = [];
-if ($evaluations) {
-    $evalIds = implode(',', array_map(fn($e) => (int)$e['id'], $evaluations));
-    $qStmt = $pdo->prepare("SELECT * FROM questions WHERE evaluation_id IN ($evalIds) ORDER BY sort_order");
-    $qStmt->execute();
-    foreach ($qStmt->fetchAll() as $q) $allQ[$q['evaluation_id']][] = $q;
-    $aStmt = $pdo->prepare("SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE evaluation_id IN ($evalIds)) ORDER BY sort_order");
-    $aStmt->execute();
-    foreach ($aStmt->fetchAll() as $a) $allA[$a['question_id']][] = $a;
-    $attStmt = $pdo->prepare("SELECT ea.*, u.first_name, u.last_name, u.email FROM evaluation_attempts ea JOIN users u ON ea.user_id=u.id WHERE ea.evaluation_id IN ($evalIds) ORDER BY ea.submitted_at DESC LIMIT 100");
-    $attStmt->execute();
-    foreach ($attStmt->fetchAll() as $att) $attemptsByEval[$att['evaluation_id']][] = $att;
+if ($courseId) {
+    $evalsStmt = $pdo->prepare("SELECT e.*, s.title as section_title FROM evaluations e LEFT JOIN sections s ON e.section_id=s.id WHERE e.course_id=? ORDER BY e.sort_order");
+    $evalsStmt->execute([$courseId]);
+    $evaluations = $evalsStmt->fetchAll();
+
+    if ($evaluations) {
+        $evalIds = implode(',', array_map(fn($e) => (int)$e['id'], $evaluations));
+        $qStmt = $pdo->prepare("SELECT * FROM questions WHERE evaluation_id IN ($evalIds) ORDER BY sort_order");
+        $qStmt->execute();
+        foreach ($qStmt->fetchAll() as $q) $allQ[$q['evaluation_id']][] = $q;
+        $aStmt = $pdo->prepare("SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE evaluation_id IN ($evalIds)) ORDER BY sort_order");
+        $aStmt->execute();
+        foreach ($aStmt->fetchAll() as $a) $allA[$a['question_id']][] = $a;
+        $attStmt = $pdo->prepare("SELECT ea.*, u.first_name, u.last_name, u.email FROM evaluation_attempts ea JOIN users u ON ea.user_id=u.id WHERE ea.evaluation_id IN ($evalIds) ORDER BY ea.submitted_at DESC LIMIT 100");
+        $attStmt->execute();
+        foreach ($attStmt->fetchAll() as $att) $attemptsByEval[$att['evaluation_id']][] = $att;
+    }
 }
 
-$pageTitle = 'Admin — Evaluaciones';
-$currentPage = 'cursos';
+$pageTitle = 'Admin — Evaluaciones' . ($course ? ' · ' . htmlspecialchars($course['title']) : '');
+$currentPage = 'evaluaciones';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="mb-4">
-  <?php if ($section): ?>
-    <a href="<?= BASE_URL ?>/admin/sections.php?course_id=<?= $course['id'] ?>" class="text-sm text-selcap-600 font-medium hover:underline">← <?= htmlspecialchars($course['title']) ?></a>
-  <?php else: ?>
-    <a href="<?= BASE_URL ?>/admin/courses.php" class="text-sm text-selcap-600 font-medium hover:underline">← Cursos</a>
-  <?php endif; ?>
-</div>
-
 <div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-extrabold text-gray-900">Evaluaciones <?= $section ? '· ' . htmlspecialchars($section['title']) : '' ?></h1>
+  <div>
+    <?php if ($course): ?>
+      <a href="<?= BASE_URL ?>/admin/courses.php" class="text-sm text-selcap-600 font-medium hover:underline">← Cursos</a>
+      <h1 class="text-2xl font-extrabold text-gray-900 mt-1">Evaluaciones · <?= htmlspecialchars($course['title']) ?></h1>
+    <?php else: ?>
+      <h1 class="text-2xl font-extrabold text-gray-900">Evaluaciones</h1>
+      <p class="text-sm text-gray-400">Seleccioná un curso desde <a href="<?= BASE_URL ?>/admin/courses.php" class="text-selcap-600 hover:underline">Cursos</a></p>
+    <?php endif; ?>
+  </div>
+  <div class="flex items-center gap-2 text-sm flex-wrap">
+    <a href="<?= BASE_URL ?>/admin/courses.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Cursos</a>
+    <a href="<?= BASE_URL ?>/admin/alumnos.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Alumnos</a>
+    <a href="<?= BASE_URL ?>/admin/asignar.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Asignar</a>
+    <a href="<?= BASE_URL ?>/admin/reportes.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Reportes</a>
+  </div>
 </div>
 
 <?php if ($msg): ?>
   <div class="bg-<?= $msgType ?>-50 border border-<?= $msgType ?>-200 text-<?= $msgType ?>-700 px-4 py-3 rounded-xl text-sm mb-4"><?= $msg ?></div>
 <?php endif; ?>
 
+<?php if ($course): ?>
 <!-- Crear -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
   <h2 class="font-bold text-gray-800 mb-3">Nueva evaluación</h2>
   <form method="POST" class="space-y-3">
     <input type="hidden" name="action" value="create_evaluation">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <select name="section_id" required class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
-        <option value="">Seleccionar sección</option>
+      <select name="section_id" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
+        <option value="">Sin sección (global del curso)</option>
         <?php foreach ($sections as $s): ?>
-          <option value="<?= $s['id'] ?>" <?= $sectionId==$s['id']?'selected':'' ?>><?= htmlspecialchars($s['title']) ?></option>
+          <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['title']) ?></option>
         <?php endforeach; ?>
       </select>
       <input type="text" name="title" placeholder="Título" required class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
@@ -149,6 +147,7 @@ require __DIR__ . '/../includes/header.php';
     <input type="hidden" name="action" value="update_evaluation"><input type="hidden" name="id" value="<?= $ev['id'] ?>">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <select name="section_id" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+        <option value="">Sin sección</option>
         <?php foreach ($sections as $s): ?><option value="<?= $s['id'] ?>" <?= $s['id']==$ev['section_id']?'selected':'' ?>><?= htmlspecialchars($s['title']) ?></option><?php endforeach; ?>
       </select>
       <input type="text" name="title" value="<?= htmlspecialchars($ev['title']) ?>" class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-medium">
@@ -165,7 +164,7 @@ require __DIR__ . '/../includes/header.php';
   <form method="POST" onsubmit="return confirm('¿Eliminar?')" class="inline mt-2"><input type="hidden" name="action" value="delete_evaluation"><input type="hidden" name="id" value="<?= $ev['id'] ?>"><button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button></form>
 
   <!-- Preguntas -->
-  <div class="border-t border-gray-100 pt-4">
+  <div class="border-t border-gray-100 pt-4 mt-4">
     <h3 class="font-bold text-gray-700 text-sm mb-3">Preguntas (<?= count($questions) ?>)</h3>
     <?php foreach ($questions as $q): $answers = $allA[$q['id']] ?? []; ?>
       <div class="bg-gray-50 rounded-xl p-4 mb-3">
@@ -230,7 +229,13 @@ require __DIR__ . '/../includes/header.php';
 <?php endforeach; ?>
 
 <?php if (empty($evaluations)): ?>
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center text-gray-400">No hay evaluaciones en esta sección.</div>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center text-gray-400">No hay evaluaciones en este curso.</div>
+<?php endif; ?>
+
+<?php else: ?>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center text-gray-400">
+    Seleccioná un curso desde <a href="<?= BASE_URL ?>/admin/courses.php" class="text-selcap-600 font-semibold hover:underline">Cursos</a> para gestionar sus evaluaciones.
+  </div>
 <?php endif; ?>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>

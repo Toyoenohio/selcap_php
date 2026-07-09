@@ -59,13 +59,15 @@ CREATE TABLE lesson_attachments (
 
 CREATE TABLE evaluations (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    section_id INT NOT NULL,
+    section_id INT NULL,
+    course_id INT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     max_attempts INT DEFAULT 1,
     passing_score INT DEFAULT 80,
     sort_order INT DEFAULT 0,
-    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
+    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE SET NULL,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE questions (

@@ -104,7 +104,7 @@ require __DIR__ . '/../includes/header.php';
             <span><?= $sec['lesson_count'] ?> lecciones</span>
             <span><?= $sec['eval_count'] ?> evaluaciones</span>
             <a href="<?= BASE_URL ?>/admin/lessons.php?section_id=<?= $sec['id'] ?>" class="text-selcap-600 font-medium hover:underline">Lecciones →</a>
-            <a href="<?= BASE_URL ?>/admin/evaluations.php?section_id=<?= $sec['id'] ?>" class="text-selcap-600 font-medium hover:underline">Evaluaciones →</a>
+            <a href="<?= BASE_URL ?>/admin/evaluations.php?course_id=<?= $courseId ?>" class="text-selcap-600 font-medium hover:underline">Evaluaciones →</a>
           </div>
           <div class="flex items-center gap-2">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
