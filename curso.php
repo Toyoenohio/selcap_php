@@ -98,40 +98,32 @@ require __DIR__ . '/includes/header.php';
   </div>
 </div>
 
-<!-- Progress Section -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6 mb-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Tu progreso</p>
-      <p class="text-3xl font-extrabold text-gray-900 mt-1"><?= $progressPct ?>%</p>
-      <p class="text-sm text-gray-400 mt-1">
-        Has completado <?= $completedLessons ?> de <?= $totalLessons ?> <?= $totalLessons === 1 ? 'actividad' : 'actividades' ?>.
-      </p>
-    </div>
-    <?php if ($nextLesson): ?>
-      <a href="<?= BASE_URL ?>/lesson.php?id=<?= $nextLesson['id'] ?>"
-         class="inline-flex items-center gap-2 bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm shadow-md shadow-selcap-200">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        Continuar Aprendiendo
-      </a>
-    <?php elseif ($progressPct === 100): ?>
-      <span class="inline-flex items-center gap-2 bg-green-100 text-green-700 font-semibold px-5 py-3 rounded-xl text-sm">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        ¡Curso completado!
-      </span>
-    <?php endif; ?>
-  </div>
-  <div class="w-full bg-gray-100 rounded-full h-3 mt-4 overflow-hidden">
-    <div class="h-3 rounded-full transition-all duration-500 <?= $progressPct === 100 ? 'bg-green-500' : 'bg-selcap-500' ?>" style="width:<?= $progressPct ?>%"></div>
-  </div>
-</div>
-
-<!-- Info Cards -->
+<!-- Progress + Details Row -->
 <div class="grid md:grid-cols-2 gap-6 mb-6">
-  <!-- About -->
+  <!-- Progress -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6">
-    <h3 class="font-bold text-gray-900 mb-3">Acerca de este curso</h3>
-    <p class="text-gray-600 text-sm leading-relaxed"><?= htmlspecialchars($course['description'] ?? 'Sin descripción') ?></p>
+    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Tu progreso</p>
+    <p class="text-3xl font-extrabold text-gray-900 mt-1"><?= $progressPct ?>%</p>
+    <p class="text-sm text-gray-400 mt-1">
+      Has completado <?= $completedLessons ?> de <?= $totalLessons ?> <?= $totalLessons === 1 ? 'actividad' : 'actividades' ?>.
+    </p>
+    <div class="w-full bg-gray-100 rounded-full h-3 mt-4 overflow-hidden">
+      <div class="h-3 rounded-full transition-all duration-500 <?= $progressPct === 100 ? 'bg-green-500' : 'bg-selcap-500' ?>" style="width:<?= $progressPct ?>%"></div>
+    </div>
+    <div class="mt-5">
+      <?php if ($nextLesson): ?>
+        <a href="<?= BASE_URL ?>/lesson.php?id=<?= $nextLesson['id'] ?>"
+           class="inline-flex items-center gap-2 bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm shadow-md shadow-selcap-200 w-full justify-center">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          Continuar Aprendiendo
+        </a>
+      <?php elseif ($progressPct === 100): ?>
+        <span class="inline-flex items-center gap-2 bg-green-100 text-green-700 font-semibold px-5 py-3 rounded-xl text-sm w-full justify-center">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          ¡Curso completado!
+        </span>
+      <?php endif; ?>
+    </div>
   </div>
 
   <!-- Details -->
@@ -166,6 +158,14 @@ require __DIR__ . '/includes/header.php';
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- About (full width) -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6 mb-6">
+  <h3 class="font-bold text-gray-900 mb-3">Acerca de este curso</h3>
+  <div class="text-gray-600 text-sm leading-relaxed lesson-content">
+    <?= $course['description'] ?: '<p class="text-gray-400">Sin descripción</p>' ?>
   </div>
 </div>
 
