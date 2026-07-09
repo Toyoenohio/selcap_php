@@ -88,10 +88,8 @@ require __DIR__ . '/../includes/header.php';
   <h1 class="text-2xl font-extrabold text-gray-900">Alumnos</h1>
   <div class="flex items-center gap-2 text-sm flex-wrap">
     <a href="<?= BASE_URL ?>/admin/courses.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Cursos</a>
-    <a href="<?= BASE_URL ?>/admin/" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Secciones</a>
-    <a href="<?= BASE_URL ?>/admin/lessons.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Lecciones</a>
-    <a href="<?= BASE_URL ?>/admin/evaluations.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Evaluaciones</a>
     <a href="<?= BASE_URL ?>/admin/alumnos.php" class="bg-selcap-600 text-white px-4 py-2 rounded-xl font-semibold">Alumnos</a>
+    <a href="<?= BASE_URL ?>/admin/asignar.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Asignar</a>
     <a href="<?= BASE_URL ?>/admin/reportes.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold transition-colors">Reportes</a>
   </div>
 </div>
