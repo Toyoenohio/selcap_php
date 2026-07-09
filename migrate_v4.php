@@ -1,6 +1,6 @@
 <?php
 // migrate_v4.php — Agrega course_id a evaluations y lo puebla desde section_id
-require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/config.php';
 $pdo = db();
 
 echo "=== Migración v4: Evaluaciones por curso ===\n";
@@ -21,10 +21,7 @@ try {
 $updated = $pdo->exec("UPDATE evaluations e JOIN sections s ON e.section_id = s.id SET e.course_id = s.course_id WHERE e.course_id IS NULL");
 echo "✓ $updated evaluaciones actualizadas con course_id.\n";
 
-// 3. Hacer course_id NOT NULL (opcional, lo dejamos nullable por ahora para compatibilidad)
-// $pdo->exec("ALTER TABLE evaluations MODIFY course_id INT NOT NULL");
-
-// 4. Agregar foreign key
+// 3. Agregar foreign key
 try {
     $pdo->exec("ALTER TABLE evaluations ADD FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE");
     echo "✓ Foreign key course_id agregada.\n";
