@@ -255,7 +255,7 @@ require __DIR__ . '/../includes/header.php';
             <?php endif; ?>
           </div>
           <?php if ($c['description']): ?>
-            <p class="text-sm text-gray-500 mt-2 line-clamp-2"><?= htmlspecialchars($c['description']) ?></p>
+            <p class="text-sm text-gray-500 mt-2 line-clamp-2"><?= strip_tags($c['description'] ?? '') ?></p>
           <?php endif; ?>
         </div>
       </div>
