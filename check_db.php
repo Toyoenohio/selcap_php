@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 require_once __DIR__ . '/includes/db.php';
 $pdo = db();
 
@@ -7,19 +9,6 @@ $cols = $pdo->query("SHOW COLUMNS FROM evaluations")->fetchAll(PDO::FETCH_ASSOC)
 foreach ($cols as $col) {
     echo "  {$col['Field']} ({$col['Type']}) Null:{$col['Null']} Key:{$col['Key']}\n";
 }
-
-echo "\n=== Foreign keys on evaluations ===\n";
-$fks = $pdo->query("
-    SELECT COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
-    FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-    WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'evaluations'
-    AND REFERENCED_TABLE_NAME IS NOT NULL
-")->fetchAll(PDO::FETCH_ASSOC);
-foreach ($fks as $fk) {
-    echo "  {$fk['COLUMN_NAME']} → {$fk['REFERENCED_TABLE_NAME']}({$fk['REFERENCED_COLUMN_NAME']})\n";
-}
-if (empty($fks)) echo "  (ninguna)\n";
 
 echo "\n=== Evaluations with NULL course_id ===\n";
 $null = $pdo->query("SELECT COUNT(*) as cnt FROM evaluations WHERE course_id IS NULL")->fetch();
