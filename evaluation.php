@@ -141,7 +141,7 @@ require __DIR__ . '/includes/header.php';
   <!-- Formulario de evaluación -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
     <h1 class="text-xl font-bold text-gray-900 mb-1"><?= htmlspecialchars($evaluation['title']) ?></h1>
-    <p class="text-gray-500 text-sm mb-2"><?= nl2br(htmlspecialchars($evaluation['description'] ?? '')) ?></p>
+    <div class="text-gray-500 text-sm mb-4 lesson-content"><?= $evaluation['description'] ?? '' ?></div>
     <div class="flex items-center gap-2 mb-6">
       <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold rounded-full">
         ⚠️ Un solo intento

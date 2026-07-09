@@ -171,7 +171,7 @@ require __DIR__ . '/includes/header.php';
             <div>
               <h3 class="font-bold text-neutral-900"><?= htmlspecialchars($sec['title']) ?></h3>
               <?php if ($sec['description']): ?>
-                <p class="text-sm text-neutral-500"><?= htmlspecialchars($sec['description']) ?></p>
+                <p class="text-sm text-neutral-500"><?= $sec['description'] ?></p>
               <?php endif; ?>
             </div>
           </div>

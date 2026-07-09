@@ -32,7 +32,7 @@ require __DIR__ . '/includes/header.php';
           <div class="w-14 h-14 bg-selcap-50 rounded-xl flex items-center justify-center text-2xl shrink-0">📚</div>
           <div>
             <h2 class="font-bold text-gray-900 text-lg"><?= htmlspecialchars($c['title']) ?></h2>
-            <p class="text-sm text-gray-500 mt-1"><?= htmlspecialchars($c['description'] ?? '') ?></p>
+            <p class="text-sm text-gray-500 mt-1 line-clamp-2"><?= strip_tags($c['description'] ?? '') ?></p>
           </div>
         </div>
         <?php if ($enrolled): ?>

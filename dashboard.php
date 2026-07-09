@@ -96,7 +96,7 @@ require __DIR__ . '/includes/header.php';
             </div>
             <div class="flex-1 min-w-0">
               <h3 class="font-bold text-gray-900 mb-1 group-hover:text-selcap-600 transition-colors"><?= htmlspecialchars($course['title']) ?></h3>
-              <p class="text-sm text-gray-500 line-clamp-2 mb-3"><?= htmlspecialchars($course['description'] ?? '') ?></p>
+              <p class="text-sm text-gray-500 line-clamp-2 mb-3"><?= strip_tags($course['description'] ?? '') ?></p>
               <div class="flex items-center gap-3">
                 <div class="flex-1 bg-gray-100 rounded-full h-2">
                   <div class="h-2 rounded-full bg-selcap-500 transition-all" style="width:<?= $pct ?>%"></div>
