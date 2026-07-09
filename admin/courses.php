@@ -37,14 +37,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     } elseif ($_POST['action'] === 'delete_course') {
         $id = (int)$_POST['id'];
-        // Solo si no tiene secciones ni alumnos
-        $chk = $pdo->prepare('SELECT (SELECT COUNT(*) FROM sections WHERE course_id=?) + (SELECT COUNT(*) FROM enrollments WHERE course_id=?) as cnt');
-        $chk->execute([$id, $id]);
-        if ((int)$chk->fetch()['cnt'] === 0) {
+        $pdo->beginTransaction();
+        try {
+            // 1. Obtener IDs de secciones del curso
+            $sections = $pdo->prepare('SELECT id FROM sections WHERE course_id=?');
+            $sections->execute([$id]);
+            $secIds = $sections->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($secIds as $secId) {
+                // 1a. Lecciones del section → attachments + progress → lessons
+                $lessons = $pdo->prepare('SELECT id FROM lessons WHERE section_id=?');
+                $lessons->execute([$secId]);
+                $lesIds = $lessons->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($lesIds as $lesId) {
+                    $pdo->prepare('DELETE FROM lesson_attachments WHERE lesson_id=?')->execute([$lesId]);
+                    $pdo->prepare('DELETE FROM lesson_progress WHERE lesson_id=?')->execute([$lesId]);
+                }
+                $pdo->prepare('DELETE FROM lessons WHERE section_id=?')->execute([$secId]);
+
+                // 1b. Evaluaciones del section → attempts → questions → answers → evaluations
+                $evals = $pdo->prepare('SELECT id FROM evaluations WHERE section_id=?');
+                $evals->execute([$secId]);
+                $evalIds = $evals->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($evalIds as $evalId) {
+                    $pdo->prepare('DELETE FROM evaluation_attempts WHERE evaluation_id=?')->execute([$evalId]);
+                    $questions = $pdo->prepare('SELECT id FROM questions WHERE evaluation_id=?');
+                    $questions->execute([$evalId]);
+                    $qIds = $questions->fetchAll(PDO::FETCH_COLUMN);
+                    foreach ($qIds as $qId) {
+                        $pdo->prepare('DELETE FROM answers WHERE question_id=?')->execute([$qId]);
+                    }
+                    $pdo->prepare('DELETE FROM questions WHERE evaluation_id=?')->execute([$evalId]);
+                }
+                $pdo->prepare('DELETE FROM evaluations WHERE section_id=?')->execute([$secId]);
+            }
+
+            // 2. Eliminar secciones
+            $pdo->prepare('DELETE FROM sections WHERE course_id=?')->execute([$id]);
+
+            // 3. Materiales del curso
+            $pdo->prepare('DELETE FROM course_materials WHERE course_id=?')->execute([$id]);
+
+            // 4. Matrículas
+            $pdo->prepare('DELETE FROM enrollments WHERE course_id=?')->execute([$id]);
+
+            // 5. Curso
             $pdo->prepare('DELETE FROM courses WHERE id=?')->execute([$id]);
-            $msg = 'Curso eliminado.'; $msgType = 'red';
-        } else {
-            $msg = 'No se puede eliminar: tiene secciones o alumnos.'; $msgType = 'red';
+
+            $pdo->commit();
+            $msg = 'Curso y todo su contenido eliminado.'; $msgType = 'red';
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $msg = 'Error al eliminar: ' . $e->getMessage(); $msgType = 'red';
         }
     } elseif ($_POST['action'] === 'clone_course') {
         $srcId = (int)$_POST['id'];
@@ -230,13 +274,11 @@ require __DIR__ . '/../includes/header.php';
           <button type="submit" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Duplicar</button>
         </form>
 
-        <?php if ($c['sections_cnt'] == 0 && $c['students'] == 0): ?>
-        <form method="POST" onsubmit="return confirm('¿Eliminar este curso?')" class="inline">
+        <form method="POST" onsubmit="return confirm('¿Eliminar este curso y TODO su contenido? Esta acción no se puede deshacer.')" class="inline">
           <input type="hidden" name="action" value="delete_course">
           <input type="hidden" name="id" value="<?= $c['id'] ?>">
           <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2">Eliminar</button>
         </form>
-        <?php endif; ?>
       </div>
 
       <!-- Formulario de edición (oculto) -->
