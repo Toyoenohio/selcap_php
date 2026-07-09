@@ -49,7 +49,7 @@ $progressPct = $totalLessons > 0 ? round($completedLessons / $totalLessons * 100
 
 // Evaluaciones
 $evalsBySection = [];
-$eStmt = $pdo->prepare('SELECT e.* FROM evaluations e WHERE e.course_id = ? ORDER BY e.sort_order');
+$eStmt = $pdo->prepare('SELECT e.* FROM evaluations e JOIN sections s ON e.section_id = s.id WHERE s.course_id = ? ORDER BY e.sort_order');
 $eStmt->execute([$courseId]);
 foreach ($eStmt->fetchAll() as $ev) {
     $attStmt = $pdo->prepare('SELECT * FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ? ORDER BY attempt_number DESC LIMIT 1');
@@ -58,10 +58,9 @@ foreach ($eStmt->fetchAll() as $ev) {
     $cntStmt = $pdo->prepare('SELECT COUNT(*) as cnt FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ?');
     $cntStmt->execute([$userId, $ev['id']]);
     $ev['attempt_count'] = (int) $cntStmt->fetch()['cnt'];
-    // Asociar a la sección o dejarlo como standalone
-    $secId = $ev['section_id'] ?? 0;
-    if ($secId) $evalsBySection[$secId][] = $ev;
-    else $evalsBySection['_global'][] = $ev;
+    // Asociar a la sección
+    $secId = $ev['section_id'];
+    $evalsBySection[$secId][] = $ev;
 }
 
 // Siguiente lección por hacer
@@ -284,38 +283,6 @@ require __DIR__ . '/includes/header.php';
     </div>
   <?php endforeach; ?>
 
-  <!-- Global evaluations (sin sección) -->
-  <?php if (!empty($evalsBySection['_global'])): ?>
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-4">
-      <h3 class="font-bold text-gray-900 mb-3">Evaluaciones del Curso</h3>
-      <?php foreach ($evalsBySection['_global'] as $ev):
-        $last = $ev['last_attempt'];
-        $maxed = $ev['attempt_count'] >= $ev['max_attempts'];
-      ?>
-        <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-          <div class="flex items-center gap-2">
-            <span>📝</span>
-            <span class="text-sm font-medium text-gray-700"><?= htmlspecialchars($ev['title']) ?></span>
-            <?php if ($last): ?>
-              <span class="text-xs <?= $last['passed'] ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50' ?> px-2 py-0.5 rounded-full font-semibold">
-                <?= round($last['score']) ?>% <?= $last['passed'] ? '✓' : '✗' ?>
-              </span>
-            <?php endif; ?>
-          </div>
-          <?php if ($last && $last['passed']): ?>
-            <span class="text-xs text-green-600 font-medium">Aprobada</span>
-          <?php elseif (!$maxed): ?>
-            <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $ev['id'] ?>"
-               class="text-xs font-semibold text-selcap-600 hover:underline">
-              <?= $ev['attempt_count'] > 0 ? 'Reintentar' : 'Comenzar' ?>
-            </a>
-          <?php else: ?>
-            <span class="text-xs text-gray-400">Sin intentos</span>
-          <?php endif; ?>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
 </div>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
