@@ -1,5 +1,5 @@
 <?php
-// curso.php — Vista de curso rediseñada
+// curso.php — Vista de curso (diseño Next.js)
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
 
@@ -20,19 +20,19 @@ $courseStmt = $pdo->prepare('SELECT * FROM courses WHERE id = ?');
 $courseStmt->execute([$courseId]);
 $course = $courseStmt->fetch();
 
-// Secciones
+// Secciones con lecciones y evaluaciones
 $sectionsStmt = $pdo->prepare('SELECT * FROM sections WHERE course_id = ? ORDER BY sort_order');
 $sectionsStmt->execute([$courseId]);
 $sections = $sectionsStmt->fetchAll();
 
 // Lecciones y progreso
-$totalLessons = 0;
-$completedLessons = 0;
+$totalItems = 0;
+$completedItems = 0;
 $lessonsBySection = [];
 $lStmt = $pdo->prepare('SELECT l.*, s.id as section_id FROM lessons l JOIN sections s ON l.section_id = s.id WHERE s.course_id = ? ORDER BY s.sort_order, l.sort_order');
 $lStmt->execute([$courseId]);
 foreach ($lStmt->fetchAll() as $l) {
-    $totalLessons++;
+    $totalItems++;
     $lessonsBySection[$l['section_id']][] = $l;
 }
 
@@ -43,25 +43,27 @@ $progStmt = $pdo->prepare('SELECT lp.lesson_id FROM lesson_progress lp
 $progStmt->execute([$userId, $courseId]);
 foreach ($progStmt->fetchAll() as $r) {
     $completedIds[$r['lesson_id']] = true;
-    $completedLessons++;
+    $completedItems++;
 }
-$progressPct = $totalLessons > 0 ? round($completedLessons / $totalLessons * 100) : 0;
 
-// Evaluaciones
+// Evaluaciones (vía sections para compatibilidad)
 $evalsBySection = [];
+$completedEvalIds = [];
 $eStmt = $pdo->prepare('SELECT e.* FROM evaluations e JOIN sections s ON e.section_id = s.id WHERE s.course_id = ? ORDER BY e.sort_order');
 $eStmt->execute([$courseId]);
 foreach ($eStmt->fetchAll() as $ev) {
-    $attStmt = $pdo->prepare('SELECT * FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ? ORDER BY attempt_number DESC LIMIT 1');
+    $totalItems++;
+    $evalsBySection[$ev['section_id']][] = $ev;
+    // Check if passed
+    $attStmt = $pdo->prepare('SELECT * FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ? AND passed = 1 LIMIT 1');
     $attStmt->execute([$userId, $ev['id']]);
-    $ev['last_attempt'] = $attStmt->fetch();
-    $cntStmt = $pdo->prepare('SELECT COUNT(*) as cnt FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ?');
-    $cntStmt->execute([$userId, $ev['id']]);
-    $ev['attempt_count'] = (int) $cntStmt->fetch()['cnt'];
-    // Asociar a la sección
-    $secId = $ev['section_id'];
-    $evalsBySection[$secId][] = $ev;
+    if ($attStmt->fetch()) {
+        $completedItems++;
+        $completedEvalIds[$ev['id']] = true;
+    }
 }
+
+$progress = $totalItems > 0 ? round($completedItems / $totalItems * 100) : 0;
 
 // Siguiente lección por hacer
 $nextLesson = null;
@@ -81,208 +83,206 @@ require __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Breadcrumb -->
-<nav class="flex items-center gap-2 text-sm text-gray-400 mb-6">
-  <a href="<?= BASE_URL ?>/mis-cursos.php" class="hover:text-selcap-600 transition-colors">Mis Cursos</a>
+<nav class="flex items-center gap-2 text-sm text-neutral-400 mb-6">
+  <a href="<?= BASE_URL ?>/mis-cursos.php" class="hover:text-primary-600 transition-colors">Mis Cursos</a>
   <span>›</span>
-  <span class="text-gray-800 font-medium truncate"><?= htmlspecialchars($course['title'] ?? '') ?></span>
+  <span class="text-neutral-800 font-medium truncate"><?= htmlspecialchars($course['title'] ?? '') ?></span>
 </nav>
 
 <!-- Course Header Card -->
-<div class="relative bg-gradient-to-br from-selcap-600 to-selcap-700 rounded-2xl p-6 md:p-8 mb-6 overflow-hidden shadow-lg">
-  <div class="absolute right-0 top-0 opacity-10 select-none pointer-events-none">
-    <svg width="200" height="200" viewBox="0 0 24 24" fill="white"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
-  </div>
-  <div class="relative z-10">
-    <h1 class="text-2xl md:text-3xl font-extrabold text-white mb-2"><?= htmlspecialchars($course['title']) ?></h1>
-    <p class="text-white/70 text-sm">Profesor: Equipo Selcap</p>
-  </div>
-</div>
-
-<!-- Progress + Details Row -->
-<div class="grid md:grid-cols-2 gap-6 mb-6">
-  <!-- Progress -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6">
-    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Tu progreso</p>
-    <p class="text-3xl font-extrabold text-gray-900 mt-1"><?= $progressPct ?>%</p>
-    <p class="text-sm text-gray-400 mt-1">
-      Has completado <?= $completedLessons ?> de <?= $totalLessons ?> <?= $totalLessons === 1 ? 'actividad' : 'actividades' ?>.
-    </p>
-    <div class="w-full bg-gray-100 rounded-full h-3 mt-4 overflow-hidden">
-      <div class="h-3 rounded-full transition-all duration-500 <?= $progressPct === 100 ? 'bg-green-500' : 'bg-selcap-500' ?>" style="width:<?= $progressPct ?>%"></div>
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-200 mb-6">
+  <div class="h-48 md:h-56 bg-gradient-to-br from-primary-900 to-primary-700 relative flex items-center justify-center">
+    <svg class="w-24 h-24 text-primary-300 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+    <div class="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent"></div>
+    <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
+      <h1 class="text-2xl md:text-3xl font-bold mb-1"><?= htmlspecialchars($course['title']) ?></h1>
+      <p class="text-primary-200 text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        Profesor: Equipo Selcap
+      </p>
     </div>
-    <div class="mt-5">
-      <?php if ($nextLesson): ?>
-        <a href="<?= BASE_URL ?>/lesson.php?id=<?= $nextLesson['id'] ?>"
-           class="inline-flex items-center gap-2 bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm shadow-md shadow-selcap-200 w-full justify-center">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </div>
+
+  <!-- Progress + Actions -->
+  <div class="p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+    <div class="flex-1 w-full max-w-xl">
+      <div class="flex justify-between text-sm font-medium mb-2">
+        <span class="text-neutral-700">Tu progreso</span>
+        <span class="text-primary-600"><?= $progress ?>%</span>
+      </div>
+      <div class="w-full bg-neutral-100 rounded-full h-3 overflow-hidden">
+        <div class="h-3 rounded-full transition-all duration-500 <?= $progress === 100 ? 'bg-green-500' : 'bg-primary-500' ?>" style="width:<?= $progress ?>%"></div>
+      </div>
+      <p class="text-sm text-neutral-500 mt-2">
+        Has completado <?= $completedItems ?> de <?= $totalItems ?> actividades.
+      </p>
+    </div>
+    <div class="shrink-0 w-full md:w-auto">
+      <?php if ($progress === 100): ?>
+        <a href="<?= BASE_URL ?>/certificados.php" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm w-full md:w-auto justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          Ver Certificado
+        </a>
+      <?php elseif ($nextLesson): ?>
+        <a href="<?= BASE_URL ?>/lesson.php?id=<?= $nextLesson['id'] ?>" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm w-full md:w-auto justify-center shadow-sm">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           Continuar Aprendiendo
         </a>
-      <?php elseif ($progressPct === 100): ?>
-        <span class="inline-flex items-center gap-2 bg-green-100 text-green-700 font-semibold px-5 py-3 rounded-xl text-sm w-full justify-center">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          ¡Curso completado!
-        </span>
       <?php endif; ?>
     </div>
   </div>
+</div>
 
-  <!-- Details -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6">
-    <h3 class="font-bold text-gray-900 mb-4">Detalles</h3>
-    <div class="space-y-4">
-      <div class="flex items-center gap-3 text-sm">
-        <span class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </span>
-        <div>
-          <p class="font-medium text-gray-800">Modo de avance</p>
-          <p class="text-xs text-gray-400"><?= $course['is_sequential'] ? 'Secuencial (Paso a paso)' : 'Libre' ?></p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3 text-sm">
-        <span class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
-        </span>
-        <div>
-          <p class="font-medium text-gray-800">Nota mínima aprobatoria</p>
-          <p class="text-xs text-gray-400"><?= $course['passing_grade'] ?? 70 ?>%</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3 text-sm">
-        <span class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-        </span>
-        <div>
-          <p class="font-medium text-gray-800">Total lecciones</p>
-          <p class="text-xs text-gray-400"><?= $totalLessons ?></p>
-        </div>
+<!-- 3-col layout: Content (2/3) + Sidebar (1/3) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <!-- Left: Content -->
+  <div class="md:col-span-2 flex flex-col gap-6">
+    <!-- About -->
+    <?php if ($course['description']): ?>
+    <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-neutral-200">
+      <h2 class="text-lg font-bold text-neutral-900 mb-4">Acerca de este curso</h2>
+      <div class="text-neutral-600 text-sm leading-relaxed lesson-content">
+        <?= $course['description'] ?>
       </div>
     </div>
-  </div>
-</div>
+    <?php endif; ?>
 
-<!-- About (full width) -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6 mb-6">
-  <h3 class="font-bold text-gray-900 mb-3">Acerca de este curso</h3>
-  <div class="text-gray-600 text-sm leading-relaxed lesson-content">
-    <?= $course['description'] ?: '<p class="text-gray-400">Sin descripción</p>' ?>
-  </div>
-</div>
+    <!-- Course Content -->
+    <div class="flex flex-col gap-4">
+      <h2 class="text-lg font-bold text-neutral-900 px-1">Contenido del Curso</h2>
 
-<!-- Course Content -->
-<div class="mb-8">
-  <h2 class="text-xl font-extrabold text-gray-900 mb-4">Contenido del Curso</h2>
-
-  <?php foreach ($sections as $secIdx => $sec):
-    $lessons = $lessonsBySection[$sec['id']] ?? [];
-    $evals = $evalsBySection[$sec['id']] ?? [];
-    if (empty($lessons) && empty($evals)) continue;
-    $secDone = 0;
-    foreach ($lessons as $l) if (isset($completedIds[$l['id']])) $secDone++;
-    $secTotal = count($lessons);
-  ?>
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
-      <!-- Section header -->
-      <div class="p-5 border-b border-gray-100">
-        <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-selcap-100 flex items-center justify-center text-selcap-700 font-bold text-sm shrink-0">
-            <?= $secIdx + 1 ?>
-          </span>
-          <div>
-            <h3 class="font-bold text-gray-900"><?= htmlspecialchars($sec['title']) ?></h3>
-            <?php if ($sec['description']): ?>
-              <p class="text-sm text-gray-500"><?= htmlspecialchars($sec['description']) ?></p>
-            <?php endif; ?>
-          </div>
-          <?php if ($secTotal > 0): ?>
-            <span class="ml-auto text-xs font-semibold <?= $secDone === $secTotal ? 'text-green-600' : 'text-gray-400' ?>">
-              <?= $secDone ?>/<?= $secTotal ?>
-            </span>
-          <?php endif; ?>
+      <?php if (empty($sections)): ?>
+        <div class="bg-white rounded-2xl p-12 text-center border border-neutral-200 border-dashed">
+          <p class="text-neutral-500">El profesor aún está preparando el contenido de este curso.</p>
         </div>
-      </div>
+      <?php endif; ?>
 
-      <!-- Live URL -->
-      <?php if (!empty($sec['live_url'])):
-        $isZoomMeet = strpos($sec['live_url'], 'zoom.us') !== false || strpos($sec['live_url'], 'meet.google.com') !== false;
+      <?php foreach ($sections as $secIdx => $sec):
+        $lessons = $lessonsBySection[$sec['id']] ?? [];
+        $evals = $evalsBySection[$sec['id']] ?? [];
+        if (empty($lessons) && empty($evals)) continue;
       ?>
-        <div class="mx-4 my-3 rounded-xl overflow-hidden border-2 border-red-200 bg-red-50/30">
-          <div class="px-3 py-1.5 bg-red-500 text-white flex items-center gap-2 text-xs font-semibold">
-            <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span> 🔴 CLASE EN VIVO
-          </div>
-          <?php if ($isZoomMeet): ?>
-            <div class="p-4 text-center">
-              <a href="<?= htmlspecialchars($sec['live_url']) ?>" target="_blank" rel="noopener"
-                 class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                🔴 Abrir en pestaña nueva →
-              </a>
+        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+          <!-- Section header -->
+          <div class="bg-neutral-50 p-4 border-b border-neutral-200 flex items-center gap-4">
+            <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm shrink-0">
+              <?= $secIdx + 1 ?>
             </div>
-          <?php else: ?>
-            <div class="aspect-video">
-              <iframe src="<?= htmlspecialchars($sec['live_url']) ?>" class="w-full h-full" frameborder="0" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
-            </div>
-          <?php endif; ?>
-        </div>
-      <?php endif; ?>
-
-      <!-- Lessons -->
-      <div class="divide-y divide-gray-50">
-        <?php foreach ($lessons as $l):
-          $isDone = isset($completedIds[$l['id']]);
-        ?>
-          <a href="<?= BASE_URL ?>/lesson.php?id=<?= $l['id'] ?>"
-             class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors group">
-            <?php if ($isDone): ?>
-              <span class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              </span>
-              <span class="text-sm text-gray-500 line-through"><?= htmlspecialchars($l['title']) ?></span>
-              <span class="ml-auto text-xs text-gray-300">Lección</span>
-            <?php else: ?>
-              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-selcap-100 group-hover:text-selcap-600 transition-colors">
-                <svg class="w-4 h-4 text-gray-400 group-hover:text-selcap-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              </span>
-              <span class="text-sm font-medium text-gray-800"><?= htmlspecialchars($l['title']) ?></span>
-              <span class="ml-auto text-xs text-gray-300">Lección</span>
-            <?php endif; ?>
-          </a>
-        <?php endforeach; ?>
-      </div>
-
-      <!-- Evaluations for this section -->
-      <?php if ($evals): ?>
-        <div class="border-t border-gray-100 px-5 py-3 bg-gray-50/50">
-          <?php foreach ($evals as $ev):
-            $last = $ev['last_attempt'];
-            $maxed = $ev['attempt_count'] >= $ev['max_attempts'];
-          ?>
-            <div class="flex items-center justify-between py-1">
-              <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded bg-amber-100 flex items-center justify-center text-xs shrink-0">📝</span>
-                <span class="text-sm font-medium text-gray-700"><?= htmlspecialchars($ev['title']) ?></span>
-                <?php if ($last): ?>
-                  <span class="text-xs <?= $last['passed'] ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50' ?> px-2 py-0.5 rounded-full font-semibold">
-                    <?= round($last['score']) ?>% <?= $last['passed'] ? '✓' : '✗' ?>
-                  </span>
-                <?php endif; ?>
-              </div>
-              <?php if ($last && $last['passed']): ?>
-                <span class="text-xs text-green-600 font-medium">Aprobada</span>
-              <?php elseif (!$maxed): ?>
-                <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $ev['id'] ?>"
-                   class="text-xs font-semibold text-selcap-600 hover:underline">
-                  <?= $ev['attempt_count'] > 0 ? 'Reintentar' : 'Comenzar' ?> (<?= $ev['max_attempts'] - $ev['attempt_count'] ?>)
-                </a>
-              <?php else: ?>
-                <span class="text-xs text-gray-400">Sin intentos</span>
+            <div>
+              <h3 class="font-bold text-neutral-900"><?= htmlspecialchars($sec['title']) ?></h3>
+              <?php if ($sec['description']): ?>
+                <p class="text-sm text-neutral-500"><?= htmlspecialchars($sec['description']) ?></p>
               <?php endif; ?>
             </div>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-    </div>
-  <?php endforeach; ?>
+          </div>
 
+          <!-- Live URL -->
+          <?php if (!empty($sec['live_url'])):
+            $isZoomMeet = strpos($sec['live_url'], 'zoom.us') !== false || strpos($sec['live_url'], 'meet.google.com') !== false;
+          ?>
+            <div class="mx-4 my-3 rounded-xl overflow-hidden border-2 border-red-200 bg-red-50/30">
+              <div class="px-3 py-1.5 bg-red-500 text-white flex items-center gap-2 text-xs font-semibold">
+                <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span> 🔴 CLASE EN VIVO
+              </div>
+              <?php if ($isZoomMeet): ?>
+                <div class="p-4 text-center">
+                  <a href="<?= htmlspecialchars($sec['live_url']) ?>" target="_blank" rel="noopener"
+                     class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                    🔴 Abrir en pestaña nueva →
+                  </a>
+                </div>
+              <?php else: ?>
+                <div class="aspect-video">
+                  <iframe src="<?= htmlspecialchars($sec['live_url']) ?>" class="w-full h-full" frameborder="0" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+                </div>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
+
+          <!-- Lessons + Evaluations -->
+          <div class="flex flex-col divide-y divide-neutral-100">
+            <?php foreach ($lessons as $l):
+              $isDone = isset($completedIds[$l['id']]);
+            ?>
+              <a href="<?= BASE_URL ?>/lesson.php?id=<?= $l['id'] ?>"
+                 class="flex items-center gap-4 p-4 hover:bg-neutral-50 transition-colors group">
+                <div class="shrink-0">
+                  <?php if ($isDone): ?>
+                    <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <?php else: ?>
+                    <div class="w-6 h-6 rounded-full border-2 border-neutral-300 group-hover:border-primary-400 transition-colors"></div>
+                  <?php endif; ?>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium text-neutral-900 group-hover:text-primary-600 transition-colors"><?= htmlspecialchars($l['title']) ?></p>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Lección
+                  </div>
+                </div>
+              </a>
+            <?php endforeach; ?>
+
+            <?php foreach ($evals as $ev):
+              $isDone = isset($completedEvalIds[$ev['id']]);
+            ?>
+              <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $ev['id'] ?>"
+                 class="flex items-center gap-4 p-4 hover:bg-neutral-50 transition-colors group">
+                <div class="shrink-0">
+                  <?php if ($isDone): ?>
+                    <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <?php else: ?>
+                    <div class="w-6 h-6 rounded-full border-2 border-neutral-300 group-hover:border-primary-400 transition-colors"></div>
+                  <?php endif; ?>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium text-neutral-900 group-hover:text-primary-600 transition-colors"><?= htmlspecialchars($ev['title']) ?></p>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg> Evaluación
+                  </div>
+                </div>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+
+  <!-- Right: Sidebar Details -->
+  <div class="flex flex-col gap-6">
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
+      <h3 class="font-bold text-neutral-900 mb-4">Detalles</h3>
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center gap-3 text-sm">
+          <div class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <p class="font-medium text-neutral-900">Modo de avance</p>
+            <p class="text-neutral-500"><?= $course['is_sequential'] ? 'Secuencial (Paso a paso)' : 'Libre' ?></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 text-sm">
+          <div class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          </div>
+          <div>
+            <p class="font-medium text-neutral-900">Nota mínima aprobatoria</p>
+            <p class="text-neutral-500"><?= $course['passing_grade'] ?? 70 ?>%</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 text-sm">
+          <div class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <div>
+            <p class="font-medium text-neutral-900">Total actividades</p>
+            <p class="text-neutral-500"><?= $totalItems ?></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

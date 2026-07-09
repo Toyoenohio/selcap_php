@@ -40,7 +40,9 @@ $currentPage = $currentPage ?? '';
       theme: {
         extend: {
           colors: {
-            selcap: { 50:'#f0fdfa', 100:'#ccfbf1', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e' }
+            primary: { 50:'#EBF4FB', 100:'#D1E7F6', 200:'#A3CFED', 300:'#5BA3D9', 400:'#3A90CB', 500:'#297EBE', 600:'#1E6BA6', 700:'#1E5F8F', 800:'#1A4F76', 900:'#163F5E', 950:'#0D2A40' },
+            neutral: { 50:'#F9FAFB', 100:'#F3F4F6', 200:'#E5E7EB', 300:'#D1D5DB', 400:'#9CA3AF', 500:'#6B7280', 600:'#4B5563', 700:'#374151', 800:'#1F2937', 900:'#111827' },
+            selcap: { 50:'#EBF4FB', 100:'#D1E7F6', 500:'#297EBE', 600:'#1E6BA6', 700:'#1E5F8F' }
           }
         }
       }
@@ -58,79 +60,79 @@ $currentPage = $currentPage ?? '';
     .lesson-content td { padding:0.5rem 0.75rem; border-top:1px solid #e2e8f0; }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-neutral-50 min-h-screen">
 
 <div class="flex min-h-screen">
   <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r border-gray-200 hidden lg:flex flex-col shrink-0">
-    <div class="p-5 border-b border-gray-100">
+  <aside class="w-64 bg-white border-r border-neutral-200 hidden lg:flex flex-col shrink-0">
+    <div class="p-5 border-b border-neutral-100">
       <a href="<?= BASE_URL ?>/dashboard.php" class="flex items-center gap-2.5 no-underline">
-        <div class="w-9 h-9 bg-selcap-500 rounded-lg flex items-center justify-center">
-          <span class="text-white font-extrabold text-sm">AV</span>
+        <div class="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         </div>
-        <span class="font-bold text-gray-800 text-lg">Aula Virtual</span>
+        <span class="font-bold text-neutral-800 text-lg">Aula Virtual</span>
       </a>
     </div>
 
     <nav class="flex-1 p-4 space-y-1">
-      <a href="<?= BASE_URL ?>/dashboard.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'dashboard' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/dashboard.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'dashboard' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
         Panel
       </a>
-      <a href="<?= BASE_URL ?>/catalogo.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'catalogo' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/catalogo.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'catalogo' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
         Catálogo
       </a>
-      <a href="<?= BASE_URL ?>/mis-cursos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'mis-cursos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/mis-cursos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'mis-cursos' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
         Mis Cursos
       </a>
-      <a href="<?= BASE_URL ?>/certificados.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'certificados' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/certificados.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'certificados' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
         Certificados
       </a>
-      <a href="<?= BASE_URL ?>/perfil.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'perfil' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/perfil.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'perfil' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         Perfil
       </a>
       <?php if ($isAdmin): ?>
-      <div class="border-t border-gray-100 my-2 pt-2">
-        <p class="px-3 text-[10px] text-gray-400 mb-1 uppercase tracking-widest font-semibold">Administración</p>
+      <div class="border-t border-neutral-100 my-2 pt-2">
+        <p class="px-3 text-[10px] text-neutral-400 mb-1 uppercase tracking-widest font-semibold">Administración</p>
       </div>
-      <a href="<?= BASE_URL ?>/admin/courses.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'cursos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/admin/courses.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'cursos' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
         Cursos
       </a>
-      <a href="<?= BASE_URL ?>/admin/alumnos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'alumnos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/admin/alumnos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'alumnos' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
         Alumnos
       </a>
-      <a href="<?= BASE_URL ?>/admin/reportes.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-        <?= $currentPage === 'reportes' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' ?>">
+      <a href="<?= BASE_URL ?>/admin/reportes.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+        <?= $currentPage === 'reportes' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Reportes
       </a>
       <?php endif; ?>
     </nav>
 
-    <div class="p-4 border-t border-gray-100">
+    <div class="p-4 border-t border-neutral-100">
       <div class="flex items-center gap-3 mb-3">
-        <div class="w-8 h-8 rounded-full bg-selcap-100 flex items-center justify-center text-selcap-700 font-bold text-xs">
+        <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
           <?= strtoupper(substr($user['first_name'] ?? 'U', 0, 1) . substr($user['last_name'] ?? '', 0, 1)) ?>
         </div>
         <div class="min-w-0">
-          <p class="text-sm font-medium text-gray-800 truncate"><?= htmlspecialchars(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?></p>
-          <p class="text-xs text-gray-400"><?= $isAdmin ? 'Administrador' : 'Estudiante' ?></p>
+          <p class="text-sm font-medium text-neutral-800 truncate"><?= htmlspecialchars(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?></p>
+          <p class="text-xs text-neutral-400"><?= $isAdmin ? 'Administrador' : 'Estudiante' ?></p>
         </div>
       </div>
-      <a href="<?= BASE_URL ?>/logout.php" class="flex items-center gap-2 text-xs text-gray-400 hover:text-red-500 transition-colors">
+      <a href="<?= BASE_URL ?>/logout.php" class="flex items-center gap-2 text-xs text-neutral-400 hover:text-red-500 transition-colors">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4 4m4-4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Cerrar sesión
       </a>
