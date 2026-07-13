@@ -63,6 +63,11 @@ foreach ($eStmt->fetchAll() as $ev) {
     }
 }
 
+// Materiales del curso
+$materialsStmt = $pdo->prepare('SELECT * FROM course_materials WHERE course_id = ? ORDER BY created_at DESC');
+$materialsStmt->execute([$courseId]);
+$materials = $materialsStmt->fetchAll();
+
 $progress = $totalItems > 0 ? round($completedItems / $totalItems * 100) : 0;
 
 // Siguiente lección por hacer
@@ -251,6 +256,31 @@ require __DIR__ . '/includes/header.php';
         </div>
       <?php endforeach; ?>
     </div>
+
+    <!-- Course Materials -->
+    <?php if (!empty($materials)): ?>
+    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+      <h2 class="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Materiales del Curso
+      </h2>
+      <div class="flex flex-col gap-2">
+        <?php foreach ($materials as $m): ?>
+          <a href="<?= htmlspecialchars($m['file_url']) ?>" target="_blank"
+             class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group border border-neutral-100">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-neutral-900 truncate group-hover:text-primary-600 transition-colors"><?= htmlspecialchars($m['file_name']) ?></p>
+              <p class="text-xs text-neutral-500"><?= round($m['file_size']/1024, 1) ?> KB · <?= htmlspecialchars($m['file_type'] ?? 'Desconocido') ?></p>
+            </div>
+            <svg class="w-5 h-5 text-neutral-300 group-hover:text-primary-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
   </div>
 
   <!-- Right: Sidebar Details -->
