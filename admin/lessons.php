@@ -192,16 +192,20 @@ require __DIR__ . '/../includes/header.php';
         <?php endif; ?>
 
         <div class="flex items-center justify-between">
-          <form method="POST" enctype="multipart/form-data" class="inline-flex items-center gap-2">
-            <input type="hidden" name="action" value="upload_attachment"><input type="hidden" name="lesson_id" value="<?= $l['id'] ?>">
-            <input type="file" name="attachment" required class="text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-selcap-50 file:text-selcap-700">
-            <button type="submit" class="text-xs font-medium text-selcap-600 hover:underline">Subir</button>
-          </form>
-          <div class="flex items-center gap-2">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
-          </div>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
         </div>
       </form>
+      
+      <!-- Upload form outside edit form -->
+      <div class="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+        <span class="text-xs text-gray-400">📎 Adjuntar archivo:</span>
+        <form method="POST" enctype="multipart/form-data" class="inline-flex items-center gap-2">
+          <input type="hidden" name="action" value="upload_attachment">
+          <input type="hidden" name="lesson_id" value="<?= $l['id'] ?>">
+          <input type="file" name="attachment" required class="text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-selcap-50 file:text-selcap-700">
+          <button type="submit" class="text-xs font-medium text-selcap-600 hover:underline">Subir archivo</button>
+        </form>
+      </div>
       <form method="POST" onsubmit="return confirm('¿Eliminar esta lección?')" class="inline mt-2">
         <input type="hidden" name="action" value="delete_lesson"><input type="hidden" name="id" value="<?= $l['id'] ?>">
         <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Eliminar</button>
