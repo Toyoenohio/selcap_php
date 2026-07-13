@@ -203,7 +203,10 @@ require __DIR__ . '/../includes/header.php';
 
 <!-- Crear curso -->
 <details class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6" <?= empty($courses) ? 'open' : '' ?>>
-  <summary class="p-5 cursor-pointer font-bold text-gray-800 hover:text-selcap-600 transition-colors select-none">+ Nuevo curso</summary>
+  <summary class="p-5 cursor-pointer list-none flex items-center justify-between select-none">
+    <h2 class="font-bold text-gray-800">+ Nuevo curso</h2>
+    <svg class="w-5 h-5 text-gray-400 group-open:rotate-45 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+  </summary>
   <form method="POST" class="px-5 pb-5 space-y-3">
     <input type="hidden" name="action" value="create_course">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">

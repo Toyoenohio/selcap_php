@@ -118,8 +118,12 @@ require __DIR__ . '/../includes/header.php';
 
 <?php if ($course): ?>
 <!-- Crear -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
-  <h2 class="font-bold text-gray-800 mb-3">Nueva evaluación</h2>
+<details class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 group">
+  <summary class="p-5 cursor-pointer list-none flex items-center justify-between select-none">
+    <h2 class="font-bold text-gray-800">+ Nueva evaluación</h2>
+    <svg class="w-5 h-5 text-gray-400 group-open:rotate-45 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+  </summary>
+  <div class="px-5 pb-5">
   <form method="POST" class="space-y-3">
     <input type="hidden" name="action" value="create_evaluation">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -138,7 +142,8 @@ require __DIR__ . '/../includes/header.php';
     <textarea name="description" placeholder="Descripción" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear evaluación</button>
   </form>
-</div>
+  </div>
+</details>
 
 <!-- Lista -->
 <?php foreach ($evaluations as $ev): $questions = $allQ[$ev['id']] ?? []; $attempts = $attemptsByEval[$ev['id']] ?? []; ?>
