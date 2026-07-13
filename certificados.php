@@ -37,7 +37,10 @@ require __DIR__ . '/includes/header.php';
           <p class="text-sm text-gray-500"><?= htmlspecialchars($cert['course_title']) ?></p>
           <p class="text-xs text-gray-400">Aprobado el <?= date('d/m/Y', strtotime($cert['submitted_at'])) ?> con <?= round($cert['score']) ?>%</p>
         </div>
-        <a href="<?= BASE_URL ?>/curso.php?id=<?= $cert['course_id'] ?>" class="text-selcap-600 text-sm font-semibold hover:underline shrink-0">Ver curso →</a>
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="<?= BASE_URL ?>/certificado.php?id=<?= $cert['id'] ?>" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm">🎓 Ver certificado</a>
+          <a href="<?= BASE_URL ?>/curso.php?id=<?= $cert['course_id'] ?>" class="text-selcap-600 text-sm font-semibold hover:underline">Ver curso →</a>
+        </div>
       </div>
     <?php endforeach; ?>
   </div>
