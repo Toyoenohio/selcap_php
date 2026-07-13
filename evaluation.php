@@ -19,6 +19,24 @@ if (!$evaluation) {
     exit;
 }
 
+// Evaluación inactiva
+if (empty($evaluation['is_active'])) {
+    $pageTitle = 'Evaluación no disponible';
+    require __DIR__ . '/includes/header.php';
+    ?>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="text-6xl mb-4">🔒</div>
+        <h2 class="text-xl font-extrabold text-gray-800 mb-2">Evaluación no disponible</h2>
+        <p class="text-gray-500 mb-4">Esta evaluación no está activa en este momento. El instructor la habilitará cuando corresponda.</p>
+        <a href="<?= BASE_URL ?>/dashboard.php" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm inline-block">
+            Volver al curso
+        </a>
+    </div>
+    <?php
+    require __DIR__ . '/includes/footer.php';
+    exit;
+}
+
 // ── Un solo intento: ¿ya lo hizo? ──
 $lastStmt = $pdo->prepare('SELECT * FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ? ORDER BY attempt_number DESC LIMIT 1');
 $lastStmt->execute([$userId, $evalId]);

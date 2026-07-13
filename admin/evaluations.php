@@ -22,12 +22,14 @@ if ($courseId) {
 // Acciones
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'create_evaluation') {
-        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order) VALUES (?, ?, ?, ?, 1, ?, ?)');
-        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0]);
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order, is_active) VALUES (?, ?, ?, ?, 1, ?, ?, ?)');
+        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive]);
         $msg = 'Evaluación creada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'update_evaluation') {
-        $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=? WHERE id=?')
-            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, (int)$_POST['id']]);
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=?, is_active=? WHERE id=?')
+            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, (int)$_POST['id']]);
         $msg = 'Evaluación actualizada.'; $msgType = 'blue';
     } elseif ($_POST['action'] === 'delete_evaluation') {
         $pdo->prepare('DELETE FROM evaluations WHERE id=?')->execute([(int)$_POST['id']]);
@@ -140,6 +142,18 @@ require __DIR__ . '/../includes/header.php';
       <input type="number" name="sort_order" placeholder="Orden" value="0" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
     <textarea name="description" placeholder="Descripción" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
+    <div class="flex items-center justify-between">
+      <label class="flex items-center gap-3 cursor-pointer select-none">
+        <span class="text-sm text-gray-700 font-medium">🔒 ¿Activa?</span>
+        <div class="relative">
+          <input type="checkbox" name="is_active" value="1" class="sr-only peer">
+          <div class="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors"></div>
+          <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
+        </div>
+        <span class="text-xs text-gray-400 peer-checked:hidden">Apagada</span>
+        <span class="text-xs text-green-600 hidden peer-checked:inline font-semibold">Encendida</span>
+      </label>
+    </div>
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear evaluación</button>
   </form>
   </div>
@@ -162,7 +176,17 @@ require __DIR__ . '/../includes/header.php';
       <input type="number" name="sort_order" value="<?= $ev['sort_order'] ?>" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
     </div>
     <textarea name="description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($ev['description']??'') ?></textarea>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-4 flex-wrap">
+      <label class="flex items-center gap-3 cursor-pointer select-none">
+        <span class="text-sm text-gray-700 font-medium">🔒 ¿Activa?</span>
+        <div class="relative">
+          <input type="checkbox" name="is_active" value="1" <?= ($ev['is_active'] ?? 0) ? 'checked' : '' ?> class="sr-only peer">
+          <div class="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors"></div>
+          <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
+        </div>
+        <span class="text-xs text-gray-400 peer-checked:hidden">Apagada</span>
+        <span class="text-xs text-green-600 hidden peer-checked:inline font-semibold">Encendida</span>
+      </label>
       <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar</button>
     </div>
   </form>

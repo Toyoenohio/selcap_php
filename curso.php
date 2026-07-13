@@ -49,7 +49,7 @@ foreach ($progStmt->fetchAll() as $r) {
 // Evaluaciones (vía sections para compatibilidad)
 $evalsBySection = [];
 $completedEvalIds = [];
-$eStmt = $pdo->prepare('SELECT e.* FROM evaluations e WHERE e.course_id = ? ORDER BY e.sort_order');
+$eStmt = $pdo->prepare('SELECT e.* FROM evaluations e WHERE e.course_id = ? AND e.is_active = 1 ORDER BY e.sort_order');
 $eStmt->execute([$courseId]);
 foreach ($eStmt->fetchAll() as $ev) {
     $totalItems++;
