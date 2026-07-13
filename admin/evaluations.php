@@ -176,14 +176,17 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <div class="space-y-2">
             <?php foreach ($answers as $i => $a): ?>
-              <div class="flex items-center gap-2">
-                <input type="radio" name="answer_correct" value="<?= $i ?>" <?= $a['is_correct']?'checked':'' ?> class="accent-selcap-600 w-4 h-4 shrink-0">
+              <div class="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-white transition-colors cursor-pointer" onclick="this.querySelector('input[type=radio]').click()">
+                <input type="radio" name="answer_correct" value="<?= $i ?>" <?= $a['is_correct']?'checked':'' ?> class="w-5 h-5 accent-blue-600 cursor-pointer shrink-0">
                 <input type="text" name="answer_text[<?= $i ?>]" value="<?= htmlspecialchars($a['text']) ?>" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm">
-                <?php if ($a['is_correct']): ?><span class="text-xs text-green-600 font-bold shrink-0">✓</span><?php endif; ?>
+                <?php if ($a['is_correct']): ?><span class="text-xs text-green-600 font-bold shrink-0 ml-1">✓ Correcta</span><?php endif; ?>
               </div>
             <?php endforeach; ?>
             <?php $newIdx=count($answers); ?>
-            <div class="flex items-center gap-2"><input type="radio" name="answer_correct" value="<?= $newIdx ?>" class="accent-selcap-600 w-4 h-4 shrink-0"><input type="text" name="answer_text[<?= $newIdx ?>]" placeholder="Nueva respuesta..." class="flex-1 px-3 py-2 bg-white border border-dashed border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm"></div>
+            <div class="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-white transition-colors cursor-pointer" onclick="this.querySelector('input[type=radio]').click()">
+              <input type="radio" name="answer_correct" value="<?= $newIdx ?>" class="w-5 h-5 accent-blue-600 cursor-pointer shrink-0">
+              <input type="text" name="answer_text[<?= $newIdx ?>]" placeholder="Nueva respuesta..." class="flex-1 px-3 py-2 bg-white border border-dashed border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm">
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-2 rounded-lg transition-colors text-xs">Guardar</button>
@@ -200,7 +203,12 @@ require __DIR__ . '/../includes/header.php';
           <input type="number" name="points" value="1" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
         </div>
         <div class="space-y-2">
-          <?php for($i=0;$i<4;$i++): ?><div class="flex items-center gap-2"><input type="radio" name="answer_correct" value="<?= $i ?>" <?= $i===0?'checked':'' ?> class="accent-selcap-600 w-4 h-4 shrink-0"><input type="text" name="answer_text[<?= $i ?>]" placeholder="Respuesta <?= $i+1 ?>" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm"></div><?php endfor; ?>
+          <?php for($i=0;$i<4;$i++): ?>
+            <div class="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onclick="this.querySelector('input[type=radio]').click()">
+              <input type="radio" name="answer_correct" value="<?= $i ?>" <?= $i===0?'checked':'' ?> class="w-5 h-5 accent-blue-600 cursor-pointer shrink-0">
+              <input type="text" name="answer_text[<?= $i ?>]" placeholder="Respuesta <?= $i+1 ?><?= $i===0?' (correcta por defecto)':'' ?>" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm">
+            </div>
+          <?php endfor; ?>
         </div>
         <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm">Crear pregunta</button>
       </form>
