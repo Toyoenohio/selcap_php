@@ -16,8 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $passingGrade = (int)($_POST['passing_grade'] ?? 70);
         if ($title) {
             try {
-                $stmt = $pdo->prepare('INSERT INTO courses (title, description, sku, is_sequential, passing_grade, status) VALUES (?, ?, ?, ?, ?, ?)');
-                $stmt->execute([$title, $desc, $sku ?: null, $isSequential, $passingGrade, $status]);
+                $stmt = $pdo->prepare('INSERT INTO courses (title, description, sku, is_sequential, passing_grade, status, hours, date_range, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->execute([$title, $desc, $sku ?: null, $isSequential, $passingGrade, $status,
+                    $_POST['hours'] ?: null, $_POST['date_range'] ?: null, $_POST['address'] ?: null]);
                 $msg = 'Curso creado.'; $msgType = 'green';
             } catch (PDOException $e) {
                 $msg = $e->getCode() == 23000 ? 'El SKU ya existe.' : 'Error: ' . $e->getMessage();
@@ -27,9 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'update_course') {
         $id = (int)$_POST['id'];
         try {
-            $pdo->prepare('UPDATE courses SET title=?, description=?, sku=?, is_sequential=?, passing_grade=?, status=? WHERE id=?')
+            $pdo->prepare('UPDATE courses SET title=?, description=?, sku=?, is_sequential=?, passing_grade=?, status=?, hours=?, date_range=?, address=? WHERE id=?')
                 ->execute([trim($_POST['title']), trim($_POST['description'] ?? ''), trim($_POST['sku'] ?? '') ?: null,
-                    isset($_POST['is_sequential']) ? 1 : 0, (int)$_POST['passing_grade'], $_POST['status'], $id]);
+                    isset($_POST['is_sequential']) ? 1 : 0, (int)$_POST['passing_grade'], $_POST['status'],
+                    $_POST['hours'] ?: null, $_POST['date_range'] ?: null, $_POST['address'] ?: null, $id]);
             $msg = 'Curso actualizado.'; $msgType = 'blue';
         } catch (PDOException $e) {
             $msg = $e->getCode() == 23000 ? 'SKU duplicado.' : 'Error: ' . $e->getMessage();
@@ -101,8 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             try {
                 // Copiar curso
                 $newTitle = trim($_POST['clone_title'] ?? '') ?: $src['title'] . ' (copia)';
-                $pdo->prepare('INSERT INTO courses (title, description, sku, is_sequential, passing_grade, status) VALUES (?, ?, NULL, ?, ?, "draft")')
-                    ->execute([$newTitle, $src['description'], $src['is_sequential'], $src['passing_grade']]);
+                $pdo->prepare('INSERT INTO courses (title, description, sku, is_sequential, passing_grade, status, hours, date_range, address) VALUES (?, ?, NULL, ?, ?, "draft", ?, ?, ?)')
+                    ->execute([$newTitle, $src['description'], $src['is_sequential'], $src['passing_grade'],
+                        $src['hours'], $src['date_range'], $src['address']]);
                 $newCourseId = (int)$pdo->lastInsertId();
 
                 // Copiar secciones → lecciones → attachments → evaluaciones → preguntas → respuestas
@@ -228,6 +231,14 @@ require __DIR__ . '/../includes/header.php';
     </div>
     <textarea name="description" placeholder="Descripción" rows="2"
               class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <input type="text" name="date_range" placeholder="Fechas: Del 05 y 08 de Mayo, 2025"
+             class="sm:col-span-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm font-mono">
+      <input type="number" name="hours" placeholder="Horas totales"
+             class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+    </div>
+    <input type="text" name="address" placeholder="Dirección (default: Av. Tobalaba 1621, Providencia, Santiago)"
+           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Crear curso</button>
   </form>
 </details>
@@ -311,6 +322,14 @@ require __DIR__ . '/../includes/header.php';
           </div>
           <textarea name="description" rows="2"
                     class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($c['description']??'') ?></textarea>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input type="text" name="date_range" value="<?= htmlspecialchars($c['date_range'] ?? '') ?>" placeholder="Fechas: Del 05 y 08 de Mayo, 2025"
+                   class="sm:col-span-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm font-mono">
+            <input type="number" name="hours" value="<?= htmlspecialchars($c['hours'] ?? '') ?>" placeholder="Horas"
+                   class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+          </div>
+          <input type="text" name="address" value="<?= htmlspecialchars($c['address'] ?? '') ?>" placeholder="Dirección"
+                 class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
           <div class="flex gap-2">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Guardar cambios</button>
             <button type="button" onclick="toggleEdit(<?= $c['id'] ?>)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl transition-colors text-sm">Cancelar</button>

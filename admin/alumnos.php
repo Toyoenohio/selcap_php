@@ -19,8 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $msg = 'El email ya está registrado.'; $msgType = 'red';
         } elseif ($email && $firstName && $lastName) {
             $hash = password_hash($password, PASSWORD_BCRYPT);
-            $stmt = $pdo->prepare('INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES (?, ?, ?, ?, "student")');
-            $stmt->execute([$email, $hash, $firstName, $lastName]);
+            $rut = trim($_POST['rut'] ?? '') ?: null;
+            $stmt = $pdo->prepare('INSERT INTO users (email, password_hash, first_name, last_name, role, rut) VALUES (?, ?, ?, ?, "student", ?)');
+            $stmt->execute([$email, $hash, $firstName, $lastName, $rut]);
             $userId = (int) $pdo->lastInsertId();
 
             // Auto-enroll
@@ -39,9 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $lastName = trim($_POST['last_name'] ?? '');
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $newPassword = trim($_POST['new_password'] ?? '');
+        $rut = trim($_POST['rut'] ?? '') ?: null;
 
-        $pdo->prepare('UPDATE users SET email = ?, first_name = ?, last_name = ?, is_active = ? WHERE id = ? AND role = "student"')
-            ->execute([$email, $firstName, $lastName, $isActive, $id]);
+        $pdo->prepare('UPDATE users SET email = ?, first_name = ?, last_name = ?, is_active = ?, rut = ? WHERE id = ? AND role = "student"')
+            ->execute([$email, $firstName, $lastName, $isActive, $rut, $id]);
 
         if ($newPassword) {
             $hash = password_hash($newPassword, PASSWORD_BCRYPT);
@@ -112,7 +114,10 @@ require __DIR__ . '/../includes/header.php';
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <input type="email" name="email" placeholder="Correo electrónico" required
              class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
-      <div>
+      <input type="text" name="rut" placeholder="R.U.T. (XX.XXX.XXX-X)"
+             class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-mono text-sm">
+    </div>
+    <div>
         <input type="text" name="password" value="Selcap2026*" placeholder="Contraseña"
                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
         <p class="text-xs text-gray-400 mt-1">Contraseña por defecto. El alumno puede cambiarla en Perfil.</p>
@@ -205,6 +210,8 @@ require __DIR__ . '/../includes/header.php';
       </div>
       <input type="email" name="email" id="edit_email" placeholder="Email" required
              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
+      <input type="text" name="rut" id="edit_rut" placeholder="R.U.T. (XX.XXX.XXX-X)"
+             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 font-mono text-sm">
       <input type="text" name="new_password" id="edit_password" placeholder="Nueva contraseña (dejar vacío para no cambiar)"
              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
       <label class="flex items-center gap-2 text-sm text-gray-700">
@@ -225,6 +232,7 @@ function editStudent(s) {
     document.getElementById('edit_first_name').value = s.first_name;
     document.getElementById('edit_last_name').value = s.last_name;
     document.getElementById('edit_email').value = s.email;
+    document.getElementById('edit_rut').value = s.rut || '';
     document.getElementById('edit_password').value = '';
     document.getElementById('edit_active').checked = s.is_active == 1;
     document.getElementById('editModal').classList.remove('hidden');
