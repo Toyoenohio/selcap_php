@@ -49,11 +49,12 @@ foreach ($progStmt->fetchAll() as $r) {
 // Evaluaciones (vía sections para compatibilidad)
 $evalsBySection = [];
 $completedEvalIds = [];
-$eStmt = $pdo->prepare('SELECT e.* FROM evaluations e JOIN sections s ON e.section_id = s.id WHERE s.course_id = ? ORDER BY e.sort_order');
+$eStmt = $pdo->prepare('SELECT e.* FROM evaluations e WHERE e.course_id = ? ORDER BY e.sort_order');
 $eStmt->execute([$courseId]);
 foreach ($eStmt->fetchAll() as $ev) {
     $totalItems++;
-    $evalsBySection[$ev['section_id']][] = $ev;
+    $key = $ev['section_id'] ?? 0;
+    $evalsBySection[$key][] = $ev;
     // Check if passed
     $attStmt = $pdo->prepare('SELECT * FROM evaluation_attempts WHERE user_id = ? AND evaluation_id = ? AND passed = 1 LIMIT 1');
     $attStmt->execute([$userId, $ev['id']]);
@@ -161,6 +162,41 @@ require __DIR__ . '/includes/header.php';
       <?php if (empty($sections)): ?>
         <div class="bg-white rounded-2xl p-12 text-center border border-neutral-200 border-dashed">
           <p class="text-neutral-500">El profesor aún está preparando el contenido de este curso.</p>
+        </div>
+      <?php endif; ?>
+
+      <?php $orphanEvals = $evalsBySection[0] ?? []; ?>
+      <?php if (!empty($orphanEvals)): ?>
+        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden mb-4 border-l-4 border-l-amber-400">
+          <div class="bg-neutral-50 p-4 border-b border-neutral-200 flex items-center gap-4">
+            <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm shrink-0">📋</div>
+            <div>
+              <h3 class="font-bold text-neutral-900">Evaluaciones del curso</h3>
+              <p class="text-sm text-neutral-500">Sin sección asignada</p>
+            </div>
+          </div>
+          <div class="flex flex-col divide-y divide-neutral-100">
+            <?php foreach ($orphanEvals as $ev):
+              $isDone = isset($completedEvalIds[$ev['id']]);
+            ?>
+              <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $ev['id'] ?>"
+                 class="flex items-center gap-4 p-4 hover:bg-neutral-50 transition-colors group">
+                <div class="shrink-0">
+                  <?php if ($isDone): ?>
+                    <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <?php else: ?>
+                    <div class="w-6 h-6 rounded-full border-2 border-neutral-300 group-hover:border-primary-400 transition-colors"></div>
+                  <?php endif; ?>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium text-neutral-900 group-hover:text-primary-600 transition-colors"><?= htmlspecialchars($ev['title']) ?></p>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg> Evaluación
+                  </div>
+                </div>
+              </a>
+            <?php endforeach; ?>
+          </div>
         </div>
       <?php endif; ?>
 
