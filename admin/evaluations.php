@@ -23,13 +23,17 @@ if ($courseId) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'create_evaluation') {
         $isActive = isset($_POST['is_active']) ? 1 : 0;
-        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order, is_active) VALUES (?, ?, ?, ?, 1, ?, ?, ?)');
-        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive]);
+        $activeFrom = $_POST['active_from'] ?: null;
+        $activeUntil = $_POST['active_until'] ?: null;
+        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order, is_active, active_from, active_until) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)');
+        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, $activeFrom, $activeUntil]);
         $msg = 'Evaluación creada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'update_evaluation') {
         $isActive = isset($_POST['is_active']) ? 1 : 0;
-        $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=?, is_active=? WHERE id=?')
-            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, (int)$_POST['id']]);
+        $activeFrom = $_POST['active_from'] ?: null;
+        $activeUntil = $_POST['active_until'] ?: null;
+        $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=?, is_active=?, active_from=?, active_until=? WHERE id=?')
+            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, $activeFrom, $activeUntil, (int)$_POST['id']]);
         $msg = 'Evaluación actualizada.'; $msgType = 'blue';
     } elseif ($_POST['action'] === 'delete_evaluation') {
         $pdo->prepare('DELETE FROM evaluations WHERE id=?')->execute([(int)$_POST['id']]);
@@ -142,6 +146,16 @@ require __DIR__ . '/../includes/header.php';
       <input type="number" name="sort_order" placeholder="Orden" value="0" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
     <textarea name="description" placeholder="Descripción" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">📅 Inicio (opcional)</label>
+        <input type="datetime-local" name="active_from" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">📅 Fin (opcional)</label>
+        <input type="datetime-local" name="active_until" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+      </div>
+    </div>
     <div class="flex items-center justify-between">
       <label class="flex items-center gap-3 cursor-pointer select-none">
         <span class="text-sm text-gray-700 font-medium">🔒 ¿Activa?</span>
@@ -176,6 +190,16 @@ require __DIR__ . '/../includes/header.php';
       <input type="number" name="sort_order" value="<?= $ev['sort_order'] ?>" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
     </div>
     <textarea name="description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($ev['description']??'') ?></textarea>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">📅 Inicio (opcional)</label>
+        <input type="datetime-local" name="active_from" value="<?= $ev['active_from'] ? date('Y-m-d\TH:i', strtotime($ev['active_from'])) : '' ?>" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">📅 Fin (opcional)</label>
+        <input type="datetime-local" name="active_until" value="<?= $ev['active_until'] ? date('Y-m-d\TH:i', strtotime($ev['active_until'])) : '' ?>" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
+      </div>
+    </div>
     <div class="flex items-center gap-4 flex-wrap">
       <label class="flex items-center gap-3 cursor-pointer select-none">
         <span class="text-sm text-gray-700 font-medium">🔒 ¿Activa?</span>

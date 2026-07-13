@@ -19,15 +19,38 @@ if (!$evaluation) {
     exit;
 }
 
-// Evaluación inactiva
-if (empty($evaluation['is_active'])) {
+// Evaluación inactiva o fuera de ventana
+$now = date('Y-m-d H:i:s');
+$beforeWindow = !empty($evaluation['active_from']) && $now < $evaluation['active_from'];
+$afterWindow  = !empty($evaluation['active_until']) && $now > $evaluation['active_until'];
+$outsideWindow = $beforeWindow || $afterWindow;
+
+if (empty($evaluation['is_active']) || $outsideWindow) {
     $pageTitle = 'Evaluación no disponible';
     require __DIR__ . '/includes/header.php';
+
+    if ($outsideWindow && !empty($evaluation['active_from']) && !empty($evaluation['active_until'])) {
+        $fromStr = date('d/m/Y H:i', strtotime($evaluation['active_from']));
+        $untilStr = date('d/m/Y H:i', strtotime($evaluation['active_until']));
+        if ($beforeWindow) {
+            $msg = "Esta evaluación estará disponible a partir del <strong>{$fromStr}</strong>.";
+        } else {
+            $msg = "Esta evaluación finalizó el <strong>{$untilStr}</strong>.";
+        }
+    } elseif ($beforeWindow && !empty($evaluation['active_from'])) {
+        $fromStr = date('d/m/Y H:i', strtotime($evaluation['active_from']));
+        $msg = "Esta evaluación estará disponible a partir del <strong>{$fromStr}</strong>.";
+    } elseif ($afterWindow && !empty($evaluation['active_until'])) {
+        $untilStr = date('d/m/Y H:i', strtotime($evaluation['active_until']));
+        $msg = "Esta evaluación finalizó el <strong>{$untilStr}</strong>.";
+    } else {
+        $msg = "Esta evaluación no está activa en este momento. El instructor la habilitará cuando corresponda.";
+    }
     ?>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
         <div class="text-6xl mb-4">🔒</div>
         <h2 class="text-xl font-extrabold text-gray-800 mb-2">Evaluación no disponible</h2>
-        <p class="text-gray-500 mb-4">Esta evaluación no está activa en este momento. El instructor la habilitará cuando corresponda.</p>
+        <p class="text-gray-500 mb-4"><?= $msg ?></p>
         <a href="<?= BASE_URL ?>/dashboard.php" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm inline-block">
             Volver al curso
         </a>
