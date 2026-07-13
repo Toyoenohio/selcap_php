@@ -6,9 +6,7 @@ $evalId = (int) ($_GET['id'] ?? 0);
 $userId = $_SESSION['user_id'];
 $pdo = db();
 
-$stmt = $pdo->prepare('SELECT e.*, s.course_id FROM evaluations e
-    JOIN sections s ON e.section_id = s.id
-    WHERE e.id = ?');
+$stmt = $pdo->prepare('SELECT e.* FROM evaluations e WHERE e.id = ?');
 $stmt->execute([$evalId]);
 $evaluation = $stmt->fetch();
 
