@@ -160,7 +160,6 @@ require __DIR__ . '/includes/header.php';
       <?php foreach ($sections as $secIdx => $sec):
         $lessons = $lessonsBySection[$sec['id']] ?? [];
         $evals = $evalsBySection[$sec['id']] ?? [];
-        if (empty($lessons) && empty($evals)) continue;
       ?>
         <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
           <!-- Section header -->
@@ -201,6 +200,12 @@ require __DIR__ . '/includes/header.php';
 
           <!-- Lessons + Evaluations -->
           <div class="flex flex-col divide-y divide-neutral-100">
+            <?php if (empty($lessons) && empty($evals)): ?>
+              <div class="p-6 text-center text-sm text-neutral-400">
+                <svg class="w-8 h-8 mx-auto mb-2 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Sin contenido aún — el profesor está preparando esta sección.
+              </div>
+            <?php endif; ?>
             <?php foreach ($lessons as $l):
               $isDone = isset($completedIds[$l['id']]);
             ?>
