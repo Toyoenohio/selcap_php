@@ -60,10 +60,22 @@ $attStmt = $pdo->prepare('SELECT * FROM lesson_attachments WHERE lesson_id = ? O
 $attStmt->execute([$lessonId]);
 $attachments = $attStmt->fetchAll();
 
-// Siguiente lección
-$nextStmt = $pdo->prepare('SELECT l.id, l.title FROM lessons l WHERE l.section_id = ? AND l.sort_order > ? ORDER BY l.sort_order LIMIT 1');
-$nextStmt->execute([$lesson['section_id'], $lesson['sort_order']]);
-$nextLesson = $nextStmt->fetch();
+// Lecciones del curso en orden (para navegación global)
+$allLessons = $pdo->prepare('SELECT l.id, l.title FROM lessons l JOIN sections s ON l.section_id = s.id WHERE s.course_id = ? ORDER BY s.sort_order, l.sort_order');
+$allLessons->execute([$lesson['course_id']]);
+$lessonList = $allLessons->fetchAll();
+
+$currentIdx = -1;
+$prevLesson = null;
+$nextLesson = null;
+foreach ($lessonList as $i => $l) {
+    if ((int)$l['id'] === $lessonId) {
+        $currentIdx = $i;
+        break;
+    }
+}
+if ($currentIdx > 0) $prevLesson = $lessonList[$currentIdx - 1];
+if ($currentIdx < count($lessonList) - 1) $nextLesson = $lessonList[$currentIdx + 1];
 
 $pageTitle = $lesson['title'];
 require __DIR__ . '/includes/header.php';
@@ -163,21 +175,30 @@ require __DIR__ . '/includes/header.php';
 
   <!-- Acciones -->
   <div class="mt-8 flex items-center justify-between gap-4 flex-wrap">
-    <form method="POST" class="flex-1 sm:flex-none">
-      <?php if (!$isDone): ?>
-        <button type="submit" name="complete" value="1"
-                class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm">
-          ✓ Marcar como completada
-        </button>
-      <?php else: ?>
-        <span class="text-sm text-green-600 font-medium">✓ Lección completada</span>
+    <div class="flex items-center gap-3">
+      <?php if ($prevLesson): ?>
+        <a href="<?= BASE_URL ?>/lesson.php?id=<?= $prevLesson['id'] ?>"
+           class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-3 rounded-xl transition-colors text-sm">
+          ← Anterior
+        </a>
       <?php endif; ?>
-    </form>
+
+      <form method="POST">
+        <?php if (!$isDone): ?>
+          <button type="submit" name="complete" value="1"
+                  class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
+            ✓ Marcar como completada
+          </button>
+        <?php else: ?>
+          <span class="text-sm text-green-600 font-medium px-2">✓ Lección completada</span>
+        <?php endif; ?>
+      </form>
+    </div>
 
     <?php if ($nextLesson): ?>
       <a href="<?= BASE_URL ?>/lesson.php?id=<?= $nextLesson['id'] ?>"
-         class="w-full sm:w-auto bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm text-center">
-        Siguiente → <?= htmlspecialchars($nextLesson['title']) ?>
+         class="flex items-center gap-2 bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
+        Siguiente →
       </a>
     <?php endif; ?>
   </div>
