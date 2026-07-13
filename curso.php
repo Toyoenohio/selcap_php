@@ -140,22 +140,24 @@ require __DIR__ . '/includes/header.php';
 
 <!-- 3-col layout: Content (2/3) + Sidebar (1/3) -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-  <!-- Left: Content -->
+  <!-- Left: Content with Tabs -->
   <div class="md:col-span-2 flex flex-col gap-6">
-    <!-- About -->
-    <?php if ($course['description']): ?>
-    <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-neutral-200">
-      <h2 class="text-lg font-bold text-neutral-900 mb-4">Acerca de este curso</h2>
-      <div class="text-neutral-600 text-sm leading-relaxed lesson-content">
-        <?= $course['description'] ?>
-      </div>
+
+    <!-- Tab Buttons -->
+    <div class="flex gap-1 bg-neutral-100 p-1 rounded-xl">
+      <button onclick="switchTab('secciones', this)" class="tab-btn active flex-1 py-2.5 px-3 text-sm font-semibold rounded-lg transition-all text-neutral-900 bg-white shadow-sm">
+        📑 Secciones
+      </button>
+      <button onclick="switchTab('contenido', this)" class="tab-btn flex-1 py-2.5 px-3 text-sm font-semibold rounded-lg transition-all text-neutral-500 hover:text-neutral-700">
+        📖 Contenido
+      </button>
+      <button onclick="switchTab('materiales', this)" class="tab-btn flex-1 py-2.5 px-3 text-sm font-semibold rounded-lg transition-all text-neutral-500 hover:text-neutral-700">
+        📁 Materiales<?php if (!empty($materials)): ?> <span class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full"><?= count($materials) ?></span><?php endif; ?>
+      </button>
     </div>
-    <?php endif; ?>
 
-    <!-- Course Content -->
-    <div class="flex flex-col gap-4">
-      <h2 class="text-lg font-bold text-neutral-900 px-1">Contenido del Curso</h2>
-
+    <!-- Tab: Secciones -->
+    <div id="tab-secciones" class="tab-content">
       <?php if (empty($sections)): ?>
         <div class="bg-white rounded-2xl p-12 text-center border border-neutral-200 border-dashed">
           <p class="text-neutral-500">El profesor aún está preparando el contenido de este curso.</p>
@@ -166,7 +168,7 @@ require __DIR__ . '/includes/header.php';
         $lessons = $lessonsBySection[$sec['id']] ?? [];
         $evals = $evalsBySection[$sec['id']] ?? [];
       ?>
-        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden mb-4">
           <!-- Section header -->
           <div class="bg-neutral-50 p-4 border-b border-neutral-200 flex items-center gap-4">
             <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm shrink-0">
@@ -257,30 +259,49 @@ require __DIR__ . '/includes/header.php';
       <?php endforeach; ?>
     </div>
 
-    <!-- Course Materials -->
-    <?php if (!empty($materials)): ?>
-    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
-      <h2 class="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
-        <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        Materiales del Curso
-      </h2>
-      <div class="flex flex-col gap-2">
-        <?php foreach ($materials as $m): ?>
-          <a href="<?= htmlspecialchars($m['file_url']) ?>" target="_blank"
-             class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group border border-neutral-100">
-            <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-neutral-900 truncate group-hover:text-primary-600 transition-colors"><?= htmlspecialchars($m['file_name']) ?></p>
-              <p class="text-xs text-neutral-500"><?= round($m['file_size']/1024, 1) ?> KB · <?= htmlspecialchars($m['file_type'] ?? 'Desconocido') ?></p>
-            </div>
-            <svg class="w-5 h-5 text-neutral-300 group-hover:text-primary-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          </a>
-        <?php endforeach; ?>
+    <!-- Tab: Contenido -->
+    <div id="tab-contenido" class="tab-content" style="display:none;">
+      <?php if ($course['description']): ?>
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-neutral-200">
+        <h2 class="text-lg font-bold text-neutral-900 mb-4">Acerca de este curso</h2>
+        <div class="text-neutral-600 text-sm leading-relaxed lesson-content">
+          <?= $course['description'] ?>
+        </div>
       </div>
+      <?php else: ?>
+      <div class="bg-white rounded-2xl p-12 text-center border border-neutral-200 border-dashed">
+        <p class="text-neutral-500">El profesor no ha agregado una descripción todavía.</p>
+      </div>
+      <?php endif; ?>
     </div>
-    <?php endif; ?>
+
+    <!-- Tab: Materiales -->
+    <div id="tab-materiales" class="tab-content" style="display:none;">
+      <?php if (!empty($materials)): ?>
+      <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+        <div class="flex flex-col gap-2">
+          <?php foreach ($materials as $m): ?>
+            <a href="<?= htmlspecialchars($m['file_url']) ?>" target="_blank"
+               class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group border border-neutral-100">
+              <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-neutral-900 truncate group-hover:text-primary-600 transition-colors"><?= htmlspecialchars($m['file_name']) ?></p>
+                <p class="text-xs text-neutral-500"><?= round($m['file_size']/1024, 1) ?> KB · <?= htmlspecialchars($m['file_type'] ?? 'Desconocido') ?></p>
+              </div>
+              <svg class="w-5 h-5 text-neutral-300 group-hover:text-primary-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php else: ?>
+      <div class="bg-white rounded-2xl p-12 text-center border border-neutral-200 border-dashed">
+        <p class="text-neutral-500">No hay materiales todavía. El profesor subirá archivos pronto.</p>
+      </div>
+      <?php endif; ?>
+    </div>
+
   </div>
 
   <!-- Right: Sidebar Details -->
@@ -319,5 +340,18 @@ require __DIR__ . '/includes/header.php';
     </div>
   </div>
 </div>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active', 'bg-white', 'shadow-sm', 'text-neutral-900');
+    b.classList.add('text-neutral-500');
+  });
+  btn.classList.add('active', 'bg-white', 'shadow-sm', 'text-neutral-900');
+  btn.classList.remove('text-neutral-500');
+}
+</script>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
