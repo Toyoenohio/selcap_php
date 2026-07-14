@@ -314,11 +314,18 @@ $fechaEmision = date('d/m/Y');
     <strong>Realizado en:</strong> Selcap Capacitación Limitada, ubicado en <?= $direccion ?>.
   </div>
 
-  <!-- Datos del alumno -->
-  <div class="datos-alumno">
-    <strong>A don(a):</strong> <span class="nombre"><?= $nombreCompleto ?></span><br>
-    <strong>R.U.T.:</strong> <?= $rut ?><br>
-    <strong>N° Folio:</strong> <?= $folio ?>
+  <!-- Datos del alumno + QR -->
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
+    <div class="datos-alumno" style="margin-bottom: 0;">
+      <strong>A don(a):</strong> <span class="nombre"><?= $nombreCompleto ?></span><br>
+      <strong>R.U.T.:</strong> <?= $rut ?><br>
+      <strong>N° Folio:</strong> <?= $folio ?>
+    </div>
+    <div style="text-align: center; flex-shrink: 0; margin-left: 20px;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=<?= urlencode('https://aula.selcap.cl/verificar.php?id=' . $attemptId) ?>"
+           alt="QR Verificación" width="110" height="110" style="display: block; border: 1px solid #ddd; padding: 2px;">
+      <p style="font-size: 8px; color: #999; margin-top: 4px; font-family: 'Inter', sans-serif;">Escanear para verificar</p>
+    </div>
   </div>
 
   <!-- Footer: firma + sello -->
