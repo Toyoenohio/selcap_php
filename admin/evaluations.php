@@ -70,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $feedback = trim($_POST['feedback'] ?? '');
         $pdo->prepare('UPDATE evaluation_attempts SET feedback=? WHERE id=?')->execute([$feedback ?: null, $attemptId]);
         $msg = 'Retroalimentación guardada.'; $msgType = 'green';
+    } elseif ($_POST['action'] === 'reset_attempt') {
+        $attemptId = (int)$_POST['attempt_id'];
+        $pdo->prepare('DELETE FROM evaluation_attempts WHERE id=?')->execute([$attemptId]);
+        $msg = 'Intento reiniciado. El alumno puede volver a tomar la evaluación.'; $msgType = 'blue';
     }
 }
 
@@ -280,7 +284,14 @@ require __DIR__ . '/../includes/header.php';
         </div>
         <form method="POST"><input type="hidden" name="action" value="save_feedback"><input type="hidden" name="attempt_id" value="<?= $att['id'] ?>">
           <textarea name="feedback" placeholder="Retroalimentación..." rows="2" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-selcap-500 text-sm"><?= htmlspecialchars($att['feedback']??'') ?></textarea>
-          <button type="submit" class="mt-2 bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Guardar feedback</button>
+          <div class="flex items-center gap-2 mt-2">
+            <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">Guardar feedback</button>
+            <form method="POST" onsubmit="return confirm('¿Reiniciar intento de <?= htmlspecialchars($att['first_name']) ?>? Podrá tomar la evaluación de nuevo y su certificado anterior se invalidará.')" class="inline">
+              <input type="hidden" name="action" value="reset_attempt">
+              <input type="hidden" name="attempt_id" value="<?= $att['id'] ?>">
+              <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">↻ Reiniciar</button>
+            </form>
+          </div>
         </form>
       </div>
     <?php endforeach; ?>
