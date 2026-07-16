@@ -103,23 +103,23 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' . urle
         .info-izquierda { text-align: left; flex: 1; }
         .info-derecha { text-align: right; min-width: 50mm; }
         .info-grid strong { font-weight: bold; }
-        .seccion-alumno { margin-bottom: 8mm; display: flex; align-items: flex-start; gap: 8mm; }
-        .seccion-alumno-izq { flex: 1; }
+        .seccion-alumno { margin-bottom: 8mm; text-align: center; position: relative; }
+        .seccion-alumno-izq { display: inline-block; text-align: center; }
         .label-alumno { font-size: 11pt; margin-bottom: 2mm; }
         .nombre-alumno {
             font-family: 'Dancing Script', 'Brush Script MT', cursive;
-            font-size: 26pt; color: #000; margin-left: 12mm; line-height: 1.2;
+            font-size: 26pt; color: #000; line-height: 1.2;
             min-height: 12mm; border-bottom: 1px solid #ccc; display: inline-block; padding-bottom: 1mm;
         }
-        .datos-alumno { margin-top: 3mm; margin-left: 12mm; font-size: 10pt; line-height: 1.6; }
-        .qr-container { text-align: center; flex-shrink: 0; }
+        .datos-alumno { margin-top: 3mm; font-size: 10pt; line-height: 1.6; }
+        .qr-container { position: absolute; right: 0; top: 50%; transform: translateY(-50%); text-align: center; }
         .qr-container img { border: 1px solid #ddd; padding: 2px; display: block; }
         .qr-label { font-size: 7pt; color: #999; margin-top: 2mm; }
         .footer-certificado {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            margin-top: auto; padding-top: 10mm;
+            display: flex; justify-content: center; align-items: flex-end;
+            margin-top: auto; padding-top: 10mm; position: relative;
         }
-        .firma-container { text-align: center; margin-left: 18mm; }
+        .firma-container { text-align: center; }
         .linea-firma {
             width: 65mm; border-bottom: 1px solid #333; margin-bottom: 1mm;
             min-height: 18mm; display: flex; align-items: flex-end; justify-content: center;
@@ -134,7 +134,7 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' . urle
             width: 32mm; height: 32mm; border: 2px solid #333; border-radius: 50%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; font-size: 6.5pt; line-height: 1.3; color: #000;
-            position: relative; margin-right: 8mm;
+            position: absolute; right: 0; bottom: 0;
         }
         .sello-logo {
             width: 7mm; height: 7mm; background: #000; border-radius: 50%;
