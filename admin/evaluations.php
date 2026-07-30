@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/n8n.php';
 requireAdmin();
 
 $pdo = db();
@@ -72,8 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $msg = 'Retroalimentación guardada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'reset_attempt') {
         $attemptId = (int)$_POST['attempt_id'];
+        // Eliminar certificado asociado si existe
+        $pdo->prepare('DELETE FROM certificates WHERE attempt_id=?')->execute([$attemptId]);
         $pdo->prepare('DELETE FROM evaluation_attempts WHERE id=?')->execute([$attemptId]);
         $msg = 'Intento reiniciado. El alumno puede volver a tomar la evaluación.'; $msgType = 'blue';
+    } elseif ($_POST['action'] === 'regenerate_certificate') {
+        $attemptId = (int)$_POST['attempt_id'];
+        $result = sendCertificateToN8N($attemptId);
+        $msg = $result['success'] ? 'Certificado enviado a generar.' : 'Error: ' . $result['message'];
+        $msgType = $result['success'] ? 'green' : 'red';
     }
 }
 
@@ -291,6 +299,13 @@ require __DIR__ . '/../includes/header.php';
               <input type="hidden" name="attempt_id" value="<?= $att['id'] ?>">
               <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">↻ Reiniciar</button>
             </form>
+            <?php if ($att['passed']): ?>
+            <form method="POST" class="inline" onsubmit="return confirm('¿Regenerar el certificado PDF de <?= htmlspecialchars($att['first_name']) ?>?')">
+              <input type="hidden" name="action" value="regenerate_certificate">
+              <input type="hidden" name="attempt_id" value="<?= $att['id'] ?>">
+              <button type="submit" class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs">📄 Regenerar PDF</button>
+            </form>
+            <?php endif; ?>
           </div>
         </form>
       </div>

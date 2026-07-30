@@ -242,7 +242,27 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' . urle
     </div>
 </div>
 
+<?php
+// Consultar estado del PDF
+$certStatusStmt = $pdo->prepare('SELECT * FROM certificates WHERE attempt_id = ?');
+$certStatusStmt->execute([$attemptId]);
+$certPdf = $certStatusStmt->fetch();
+?>
+
 <div class="btn-print no-print">
+    <?php if ($certPdf && $certPdf['status'] === 'ready' && !empty($certPdf['certificate_url'])): ?>
+      <a href="<?= BASE_URL ?>/<?= htmlspecialchars($certPdf['certificate_url']) ?>" target="_blank" class="btn btn-primary" style="background:#16a34a;">
+        ⬇️ Descargar PDF
+      </a>
+    <?php elseif ($certPdf && ($certPdf['status'] === 'pending' || $certPdf['status'] === 'processing')): ?>
+      <span class="btn" style="background:#dbeafe;color:#2563eb;cursor:default;">
+        ⏳ PDF generándose...
+      </span>
+    <?php elseif ($certPdf && $certPdf['status'] === 'error'): ?>
+      <span class="btn" style="background:#fef2f2;color:#dc2626;cursor:default;" title="<?= htmlspecialchars($certPdf['error_message'] ?? '') ?>">
+        ❌ Error al generar PDF
+      </span>
+    <?php endif; ?>
     <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir certificado</button>
     <a href="<?= BASE_URL ?>/certificados.php" class="btn btn-secondary">← Volver</a>
 </div>

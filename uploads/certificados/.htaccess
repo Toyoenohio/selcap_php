@@ -1,0 +1,13 @@
+# Permitir acceso directo a PDFs para descarga
+<FilesMatch "\.pdf$">
+    Header set Content-Disposition "attachment"
+    Allow from all
+</FilesMatch>
+
+# Bloquear listado de directorio
+Options -Indexes
+
+# Bloquear acceso a archivos que no sean PDF
+<FilesMatch "(?<!\.pdf)$">
+    Require all denied
+</FilesMatch>

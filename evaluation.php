@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/n8n.php';
 requireLogin();
 
 $evalId = (int) ($_GET['id'] ?? 0);
@@ -145,6 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_eval'])) {
     $auditStmt = $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)');
     $auditStmt->execute([$userId, 'evaluation_submitted', 'evaluation', $evalId, json_encode(['score' => $pct, 'passed' => $passed, 'passing_score' => $passingScore]), $_SERVER['REMOTE_ADDR'] ?? '']);
 
+    // ── Generar certificado PDF vía n8n si aprobó ──
+    $certResult = null;
+    if ($passed) {
+        $newAttemptId = (int)$pdo->lastInsertId();
+        $certResult = sendCertificateToN8N($newAttemptId);
+    }
+
     $submitted = true;
     $pageTitle = 'Resultado';
 } else {
@@ -170,10 +178,26 @@ require __DIR__ . '/includes/header.php';
     <p class="text-gray-500 mb-2">
       <?= $passed ? '¡Felicitaciones! Aprobaste la evaluación.' : 'No alcanzaste la nota mínima requerida.' ?>
     </p>
-    <p class="text-xs text-gray-400 mb-6">Nota de aprobación: <?= $evaluation['passing_score'] ?? 80 ?>% — Esta evaluación solo permite 1 intento.</p>
-    <a href="<?= BASE_URL ?>/dashboard.php" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-      Volver al curso
-    </a>
+    <p class="text-xs text-gray-400 mb-4">Nota de aprobación: <?= $evaluation['passing_score'] ?? 80 ?>% — Esta evaluación solo permite 1 intento.</p>
+    <?php if ($passed && $certResult): ?>
+      <div class="mt-2 mb-4 p-4 <?= $certResult['success'] ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-amber-50 border-amber-200 text-amber-700' ?> border rounded-xl text-sm">
+        <?php if ($certResult['success']): ?>
+          📄 Tu certificado PDF se está generando automáticamente. En unos minutos estará disponible para descarga en la sección <a href="<?= BASE_URL ?>/certificados.php" class="font-semibold underline">Certificados</a>.
+        <?php else: ?>
+          ⚠️ Tu certificado fue registrado pero hubo un problema generando el PDF. Podrás descargarlo más tarde desde <a href="<?= BASE_URL ?>/certificados.php" class="font-semibold underline">Certificados</a>.
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+    <div class="flex items-center justify-center gap-3">
+      <?php if ($passed): ?>
+        <a href="<?= BASE_URL ?>/certificados.php" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+          🎓 Ver certificados
+        </a>
+      <?php endif; ?>
+      <a href="<?= BASE_URL ?>/dashboard.php" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+        Volver al curso
+      </a>
+    </div>
   </div>
 
 <?php else: ?>

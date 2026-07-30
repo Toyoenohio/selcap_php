@@ -18,6 +18,10 @@ define('UPLOADS_URL', BASE_URL . '/uploads');
 // ── Curso activo (MVP: un solo curso) ──
 define('ACTIVE_COURSE_ID', 1);
 
+// ── n8n — Generación de certificados PDF ──
+define('N8N_WEBHOOK_URL', getenv('N8N_WEBHOOK_URL') ?: 'https://n8nciwok-n8n.wz1vdn.easypanel.host/webhook-test/selcap-certificados');
+define('N8N_CERT_CALLBACK_SECRET', getenv('N8N_CERT_CALLBACK_SECRET') ?: 'selcap-cert-callback-2026');
+
 // ── Conexión PDO ──
 function db(): PDO {
     static $pdo = null;
