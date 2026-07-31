@@ -88,8 +88,8 @@ function sendCertificateToN8N(int $attemptId): array
             'Accept: application/json',
         ],
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 15,          // no bloquear más de 15s
-        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT        => 3,          // no bloquear más de 15s
+        CURLOPT_CONNECTTIMEOUT => 2,
         CURLOPT_SSL_VERIFYPEER => true,
     ]);
 

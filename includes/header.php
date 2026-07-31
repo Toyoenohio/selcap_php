@@ -163,6 +163,7 @@ $currentPage = $currentPage ?? '';
         <p class="px-4 text-xs text-gray-400 mb-1 uppercase tracking-wide">Administración</p>
         <a href="<?= BASE_URL ?>/admin/courses.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'cursos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📦 Cursos</a>
         <a href="<?= BASE_URL ?>/admin/alumnos.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'alumnos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">👥 Alumnos</a>
+        <a href="<?= BASE_URL ?>/admin/matricula-masiva.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'matricula' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📋 Matrícula masiva</a>
         <a href="<?= BASE_URL ?>/admin/reportes.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'reportes' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📊 Reportes</a>
       </div>
       <?php endif; ?>
