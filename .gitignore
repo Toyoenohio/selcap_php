@@ -1,0 +1,21 @@
+# ── Credenciales (NUNCA subir) ──
+includes/api-key.php
+
+# ── Logs ──
+*.log
+error_log
+php_errorlog
+admin/php_errorlog
+
+# ── Uploads / contenido generado ──
+uploads/*
+!uploads/.gitkeep
+
+# ── Sistema / editor ──
+.well-known/
+.DS_Store
+*.swp
+
+# ── Scripts puntuales de admin (no versionar) ──
+create_admin.php
+reset_admin.php
