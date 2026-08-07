@@ -15,19 +15,26 @@ if (!$course) { header('Location: ' . BASE_URL . '/admin/courses.php'); exit; }
 
 // ── Upload ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'upload' && !empty($_FILES['file']['name'])) {
-        $file = $_FILES['file'];
-        if ($file['error'] === UPLOAD_ERR_OK) {
-            $dir = UPLOADS_DIR . '/course_' . $courseId;
-            if (!is_dir($dir)) mkdir($dir, 0755, true);
-            $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file['name']);
+    if ($_POST['action'] === 'upload' && !empty($_FILES['files']['name'][0])) {
+        $dir = UPLOADS_DIR . '/course_' . $courseId;
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $uploaded = 0; $errors = 0;
+        foreach ($_FILES['files']['name'] as $i => $origName) {
+            if (empty($origName)) continue;
+            if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) { $errors++; continue; }
+            $name = time() . '_' . $i . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $origName);
             $dest = $dir . '/' . $name;
-            move_uploaded_file($file['tmp_name'], $dest);
-            $url = UPLOADS_URL . '/course_' . $courseId . '/' . $name;
-            $pdo->prepare('INSERT INTO course_materials (course_id, file_name, file_url, file_type, file_size) VALUES (?, ?, ?, ?, ?)')
-                ->execute([$courseId, $file['name'], $url, $file['type'], $file['size']]);
-            $msg = 'Archivo subido.'; $msgType = 'green';
+            if (move_uploaded_file($_FILES['files']['tmp_name'][$i], $dest)) {
+                $url = UPLOADS_URL . '/course_' . $courseId . '/' . $name;
+                $pdo->prepare('INSERT INTO course_materials (course_id, file_name, file_url, file_type, file_size) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([$courseId, $origName, $url, $_FILES['files']['type'][$i], $_FILES['files']['size'][$i]]);
+                $uploaded++;
+            } else {
+                $errors++;
+            }
         }
+        $msg = "$uploaded archivo(s) subido(s)." . ($errors ? " $errors con error." : '');
+        $msgType = $errors && !$uploaded ? 'red' : 'green';
     } elseif ($_POST['action'] === 'delete') {
         $id = (int)$_POST['id'];
         $mat = $pdo->prepare('SELECT file_url FROM course_materials WHERE id=? AND course_id=?');
@@ -69,14 +76,14 @@ require __DIR__ . '/../includes/header.php';
 
 <!-- Subir -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
-  <h2 class="font-bold text-gray-800 mb-3">Subir archivo</h2>
+  <h2 class="font-bold text-gray-800 mb-3">Subir archivo(s)</h2>
   <form method="POST" enctype="multipart/form-data" class="flex items-end gap-3 flex-wrap">
     <input type="hidden" name="action" value="upload">
-    <input type="file" name="file" required
+    <input type="file" name="files[]" multiple required
            class="text-sm text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-selcap-50 file:text-selcap-700 hover:file:bg-selcap-100">
     <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Subir</button>
   </form>
-  <p class="text-xs text-gray-400 mt-2">PDF, imágenes, documentos, presentaciones — máx 256MB. Se guardan en <code class="bg-gray-100 px-1 rounded">uploads/course_<?= $courseId ?>/</code></p>
+  <p class="text-xs text-gray-400 mt-2">PDF, imágenes, documentos, presentaciones — podés seleccionar <strong>varios archivos a la vez</strong> (Ctrl/⌘ + clic o arrastrá y soltá). Máx 256MB c/u. Se guardan en <code class="bg-gray-100 px-1 rounded">uploads/course_<?= $courseId ?>/</code></p>
 </div>
 
 <!-- Lista -->
