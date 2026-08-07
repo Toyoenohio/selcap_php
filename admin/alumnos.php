@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/webhooks.php';
 requireAdmin();
 
 $pdo = db();
@@ -26,6 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             // Auto-enroll
             $pdo->prepare('INSERT IGNORE INTO enrollments (user_id, course_id) VALUES (?, ?)')->execute([$userId, ACTIVE_COURSE_ID]);
+
+            // Webhook de bienvenida (email automático vía n8n)
+            notifyEnrollmentToWebhook($userId, ACTIVE_COURSE_ID, 'manual');
 
             // Auditoría
             $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)')
