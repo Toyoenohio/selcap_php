@@ -6,7 +6,7 @@ $pdo = db();
 $attemptId = (int)($_GET['id'] ?? 0);
 
 $stmt = $pdo->prepare('
-    SELECT ea.*, e.title as eval_title, e.hours as eval_hours, e.date_range as eval_date_range,
+    SELECT ea.*, e.title as eval_title,
            c.title as course_title, c.hours, c.date_range, c.address,
            u.first_name, u.last_name, u.rut
     FROM evaluation_attempts ea
@@ -25,9 +25,8 @@ if (!$cert) {
 
 $nombreCompleto = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
 $curso = htmlspecialchars($cert['course_title']);
-$fechaRealizacion = htmlspecialchars($cert['eval_date_range'] ?: ($cert['date_range'] ?? ''));
-$horas = ($cert['eval_hours'] !== null ? (int)$cert['eval_hours'] : ((int)$cert['hours'] ?: 0));
-$horasStr = $horas ? $horas . ' horas' : '';
+$fechaRealizacion = htmlspecialchars($cert['date_range'] ?? '');
+$horas = $cert['hours'] ? (int)$cert['hours'] . ' horas' : '';
 $direccion = htmlspecialchars($cert['address'] ?? 'Av. Tobalaba 1621, Providencia, Santiago');
 $rut = htmlspecialchars($cert['rut'] ?? 'XX.XXX.XXX-X');
 $folio = 'N° ' . str_pad($attemptId, 5, '0', STR_PAD_LEFT);
@@ -115,7 +114,7 @@ $fechaEmision = date('d/m/Y');
   <div class="curso-nombre"><?= $curso ?></div>
   <div class="datos-curso">
     <?php if ($fechaRealizacion): ?><strong>Fecha de Realización:</strong> <?= $fechaRealizacion ?><br><?php endif; ?>
-    <?php if ($horas): ?><strong>N° Total de Horas:</strong> <?= $horasStr ?><br><?php endif; ?>
+    <?php if ($horas): ?><strong>N° Total de Horas:</strong> <?= $horas ?><br><?php endif; ?>
     <strong>Realizado en:</strong> Selcap Capacitación Limitada, ubicado en <?= $direccion ?>.
   </div>
   <div class="datos-alumno">

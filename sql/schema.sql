@@ -66,8 +66,6 @@ CREATE TABLE evaluations (
     max_attempts INT DEFAULT 1,
     passing_score INT DEFAULT 80,
     sort_order INT DEFAULT 0,
-    hours INT NULL,
-    date_range VARCHAR(255) NULL,
     FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE SET NULL,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

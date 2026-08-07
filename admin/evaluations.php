@@ -26,15 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $activeFrom = $_POST['active_from'] ?: null;
         $activeUntil = $_POST['active_until'] ?: null;
-        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order, is_active, active_from, active_until, hours, date_range) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, $activeFrom, $activeUntil, $_POST['hours'] !== '' ? (int)$_POST['hours'] : null, $_POST['date_range'] ?: null]);
+        $stmt = $pdo->prepare('INSERT INTO evaluations (course_id, section_id, title, description, max_attempts, passing_score, sort_order, is_active, active_from, active_until) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)');
+        $stmt->execute([$courseId, (int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, $activeFrom, $activeUntil]);
         $msg = 'Evaluación creada.'; $msgType = 'green';
     } elseif ($_POST['action'] === 'update_evaluation') {
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $activeFrom = $_POST['active_from'] ?: null;
         $activeUntil = $_POST['active_until'] ?: null;
-        $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=?, is_active=?, active_from=?, active_until=?, hours=?, date_range=? WHERE id=?')
-            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, $activeFrom, $activeUntil, $_POST['hours'] !== '' ? (int)$_POST['hours'] : null, $_POST['date_range'] ?: null, (int)$_POST['id']]);
+        $pdo->prepare('UPDATE evaluations SET section_id=?, title=?, description=?, passing_score=?, sort_order=?, is_active=?, active_from=?, active_until=? WHERE id=?')
+            ->execute([(int)$_POST['section_id'] ?: null, trim($_POST['title']), $_POST['description'] ?? '', (int)$_POST['passing_score'], $_POST['sort_order'] ?? 0, $isActive, $activeFrom, $activeUntil, (int)$_POST['id']]);
         $msg = 'Evaluación actualizada.'; $msgType = 'blue';
     } elseif ($_POST['action'] === 'delete_evaluation') {
         $pdo->prepare('DELETE FROM evaluations WHERE id=?')->execute([(int)$_POST['id']]);
@@ -157,16 +157,6 @@ require __DIR__ . '/../includes/header.php';
       <div><label class="text-xs text-gray-400 block mb-1">% Aprobación</label><input type="number" name="passing_score" value="80" min="0" max="100" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500"></div>
       <input type="number" name="sort_order" placeholder="Orden" value="0" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500">
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">⏱ Horas del curso (certificado)</label>
-        <input type="number" name="hours" min="0" placeholder="Ej: 16" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">📅 Fecha del curso (certificado)</label>
-        <input type="text" name="date_range" placeholder="Del 05 y 08 de Mayo, 2025" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
-      </div>
-    </div>
     <textarea name="description" placeholder="Descripción" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 wysiwyg-sm"></textarea>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div>
@@ -210,16 +200,6 @@ require __DIR__ . '/../includes/header.php';
     <div class="grid grid-cols-2 gap-3">
       <div><label class="text-xs text-gray-400 block mb-1">% Aprobación</label><input type="number" name="passing_score" value="<?= $ev['passing_score']??80 ?>" min="0" max="100" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"></div>
       <input type="number" name="sort_order" value="<?= $ev['sort_order'] ?>" class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">⏱ Horas del curso (certificado)</label>
-        <input type="number" name="hours" min="0" value="<?= $ev['hours'] !== null ? (int)$ev['hours'] : '' ?>" placeholder="Dejar vacío = usar curso" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">📅 Fecha del curso (certificado)</label>
-        <input type="text" name="date_range" value="<?= htmlspecialchars($ev['date_range'] ?? '') ?>" placeholder="Dejar vacío = usar curso" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm">
-      </div>
     </div>
     <textarea name="description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm wysiwyg-sm"><?= htmlspecialchars($ev['description']??'') ?></textarea>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

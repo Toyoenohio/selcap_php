@@ -8,7 +8,7 @@ $userId = $_SESSION['user_id'];
 $pdo = db();
 
 $stmt = $pdo->prepare('
-    SELECT ea.*, e.title as eval_title, e.hours as eval_hours, e.date_range as eval_date_range,
+    SELECT ea.*, e.title as eval_title,
            c.title as course_title, c.hours, c.date_range, c.address,
            u.first_name, u.last_name, u.rut
     FROM evaluation_attempts ea
@@ -31,9 +31,8 @@ if (!$cert) {
 
 $nombreCompleto = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
 $curso = htmlspecialchars($cert['course_title']);
-$fechaRealizacion = htmlspecialchars($cert['eval_date_range'] ?: ($cert['date_range'] ?? ''));
-$horas = ($cert['eval_hours'] !== null ? (int)$cert['eval_hours'] : ((int)$cert['hours'] ?: 0));
-$horasStr = $horas ? $horas . ' horas.' : '';
+$fechaRealizacion = htmlspecialchars($cert['date_range'] ?? '');
+$horas = $cert['hours'] ? (int)$cert['hours'] . ' horas.' : '';
 $direccion = htmlspecialchars($cert['address'] ?? 'Av. Tobalaba 1621, Providencia, Santiago.');
 $rut = htmlspecialchars($cert['rut'] ?? 'XX.XXX.XXX-X');
 $verifyUrl = 'https://aula.selcap.cl/verificar.php?id=' . $attemptId;
@@ -215,7 +214,7 @@ if ($certPdfEarly && $certPdfEarly['status'] === 'ready' && !empty($certPdfEarly
         </div>
         <div class="info-derecha">
             <?php if ($horas): ?>
-            <div><strong>N° Total de Horas:</strong> <?= $horasStr ?></div>
+            <div><strong>N° Total de Horas:</strong> <?= $horas ?></div>
             <?php endif; ?>
         </div>
     </div>
