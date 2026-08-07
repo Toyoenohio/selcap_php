@@ -37,6 +37,16 @@ $direccion = htmlspecialchars($cert['address'] ?? 'Av. Tobalaba 1621, Providenci
 $rut = htmlspecialchars($cert['rut'] ?? 'XX.XXX.XXX-X');
 $verifyUrl = 'https://aula.selcap.cl/verificar.php?id=' . $attemptId;
 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' . urlencode($verifyUrl);
+
+// ── Si el PDF oficial (generado vía n8n) ya está listo, mostrar ESE y no el HTML viejo ──
+$certPdfStmt = $pdo->prepare('SELECT * FROM certificates WHERE attempt_id = ?');
+$certPdfStmt->execute([$attemptId]);
+$certPdfEarly = $certPdfStmt->fetch();
+
+if ($certPdfEarly && $certPdfEarly['status'] === 'ready' && !empty($certPdfEarly['certificate_url'])) {
+    header('Location: ' . BASE_URL . '/' . $certPdfEarly['certificate_url']);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">

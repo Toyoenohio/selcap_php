@@ -65,6 +65,8 @@ require __DIR__ . '/includes/header.php';
                class="bg-green-100 hover:bg-green-200 text-green-800 font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm">
               ⬇ Descargar PDF
             </a>
+            <a href="<?= BASE_URL ?>/<?= htmlspecialchars($cert['certificate_url']) ?>" target="_blank"
+               class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm">🎓 Ver certificado</a>
           <?php elseif ($status === 'processing' || $status === 'pending'): ?>
             <span class="bg-blue-50 text-blue-600 font-semibold px-3 py-1.5 rounded-lg text-sm inline-flex items-center gap-1">
               <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -87,7 +89,6 @@ require __DIR__ . '/includes/header.php';
               </button>
             </form>
           <?php endif; ?>
-          <a href="<?= BASE_URL ?>/certificado.php?id=<?= $cert['id'] ?>" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm">🎓 Ver certificado</a>
           <a href="<?= BASE_URL ?>/curso.php?id=<?= $cert['course_id'] ?>" class="text-selcap-600 text-sm font-semibold hover:underline">Ver curso →</a>
         </div>
       </div>
