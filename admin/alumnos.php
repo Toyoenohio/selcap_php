@@ -60,6 +60,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)')
             ->execute([$_SESSION['user_id'], 'student_deactivated', 'user', $id, json_encode([]), $_SERVER['REMOTE_ADDR'] ?? '']);
         $msg = 'Alumno desactivado.'; $msgType = 'red';
+    } elseif ($_POST['action'] === 'create_students_bulk') {
+        // ── Carga masiva desde CSV ──
+        if (empty($_FILES['csv_file']['tmp_name'])) {
+            $msg = 'Seleccioná un archivo CSV.'; $msgType = 'red';
+        } else {
+            $contents = file_get_contents($_FILES['csv_file']['tmp_name']);
+            $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents); // quitar BOM UTF-8
+            $lines = preg_split('/\r\n|\r|\n/', trim($contents));
+            $delimiter = (strpos($contents, ';') !== false) ? ';' : ',';
+
+            $created = 0; $duplicates = 0; $errors = 0; $errorDetails = [];
+            $defaultPassword = 'Selcap2026*';
+            $hash = password_hash($defaultPassword, PASSWORD_BCRYPT);
+            $checkStmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+            $insStmt = $pdo->prepare('INSERT INTO users (email, password_hash, first_name, last_name, role, rut) VALUES (?, ?, ?, ?, "student", ?)');
+
+            foreach ($lines as $lineNum => $line) {
+                $line = trim($line);
+                if ($line === '') continue;
+
+                $cols = str_getcsv($line, $delimiter);
+                // Formato: nombre, apellido, email [, rut]
+                $firstName = trim($cols[0] ?? '');
+                $lastName  = trim($cols[1] ?? '');
+                $email     = strtolower(trim($cols[2] ?? ''));
+                $rut       = trim($cols[3] ?? '') ?: null;
+
+                // Saltar fila de encabezados si la primera columna no parece nombre
+                if ($lineNum === 0 && in_array(strtolower($firstName), ['nombre', 'first_name', 'name', 'nombres'])) {
+                    continue;
+                }
+
+                if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $errors++;
+                    $errorDetails[] = "Línea " . ($lineNum + 1) . ": datos incompletos ('$line')";
+                    continue;
+                }
+
+                $checkStmt->execute([$email]);
+                if ($checkStmt->fetch()) {
+                    $duplicates++;
+                    continue;
+                }
+
+                try {
+                    $insStmt->execute([$email, $hash, $firstName, $lastName, $rut]);
+                    $created++;
+                } catch (PDOException $e) {
+                    $errors++;
+                    $errorDetails[] = "Línea " . ($lineNum + 1) . ": " . $e->getMessage();
+                }
+            }
+
+            if ($created > 0) {
+                $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)')
+                    ->execute([$_SESSION['user_id'], 'students_bulk_created', 'user', null, json_encode(['created' => $created, 'duplicates' => $duplicates, 'errors' => $errors]), $_SERVER['REMOTE_ADDR'] ?? '']);
+            }
+
+            $msg = "$created alumno(s) creado(s)." . ($duplicates ? " $duplicates ya existían." : '') . ($errors ? " $errors con error." : '');
+            $msgType = ($errors && !$created) ? 'red' : 'green';
+            $bulkErrors = $errorDetails;
+        }
     }
 }
 
@@ -127,6 +189,27 @@ require __DIR__ . '/../includes/header.php';
       Crear alumno
     </button>
   </form>
+</div>
+
+<!-- Carga masiva -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+  <h2 class="font-bold text-gray-800 mb-1">📥 Cargar alumnos desde archivo</h2>
+  <p class="text-xs text-gray-400 mb-3">Subí un <strong>CSV</strong> con una línea por alumno: <code class="bg-gray-100 px-1 rounded">nombre, apellido, email, rut(opcional)</code>. Acepta separador <code class="bg-gray-100 px-1 rounded">,</code> o <code class="bg-gray-100 px-1 rounded">;</code> y fila de encabezados opcional. La contraseña inicial de todos es <code class="bg-gray-100 px-1 rounded">Selcap2026*</code>.</p>
+  <form method="POST" enctype="multipart/form-data" class="flex items-end gap-3 flex-wrap">
+    <input type="hidden" name="action" value="create_students_bulk">
+    <input type="file" name="csv_file" accept=".csv,text/csv" required
+           class="text-sm text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-selcap-50 file:text-selcap-700 hover:file:bg-selcap-100">
+    <button type="submit" class="bg-selcap-600 hover:bg-selcap-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">Cargar CSV</button>
+    <a href="<?= BASE_URL ?>/admin/plantilla-alumnos.csv" download class="text-selcap-600 hover:text-selcap-700 text-sm font-medium">⬇ Descargar plantilla</a>
+  </form>
+  <?php if (!empty($bulkErrors)): ?>
+    <details class="mt-3">
+      <summary class="text-red-500 text-xs font-semibold cursor-pointer">Ver <?= count($bulkErrors) ?> detalle(s) de error</summary>
+      <div class="mt-2 bg-red-50 border border-red-100 rounded-xl p-3 text-xs text-red-700 space-y-1 max-h-40 overflow-y-auto">
+        <?php foreach ($bulkErrors as $e): ?><p><?= htmlspecialchars($e) ?></p><?php endforeach; ?>
+      </div>
+    </details>
+  <?php endif; ?>
 </div>
 
 <!-- Buscar -->

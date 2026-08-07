@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/webhooks.php';
 requireAdmin();
 
 $pdo = db();
@@ -15,7 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt = $pdo->prepare('INSERT IGNORE INTO enrollments (user_id, course_id) VALUES (?, ?)');
         foreach ($userIds as $uid) {
             $stmt->execute([$uid, $courseId]);
-            $count += $stmt->rowCount();
+            $rowCount = $stmt->rowCount();
+            $count += $rowCount;
+            // Webhook de bienvenida solo para alumnos nuevos en el curso
+            if ($rowCount > 0) {
+                notifyEnrollmentToWebhook($uid, $courseId, 'bulk');
+            }
         }
         $msg = "$count alumno(s) matriculado(s).";
         $msgType = 'green';

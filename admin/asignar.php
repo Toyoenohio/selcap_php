@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/webhooks.php';
 requireAdmin();
 
 $pdo = db();
@@ -15,6 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)')
                 ->execute([$_SESSION['user_id'], 'student_enrolled', 'enrollment', $courseId,
                     json_encode(['user_id' => $userId]), $_SERVER['REMOTE_ADDR'] ?? '']);
+            // Webhook de bienvenida (email automático vía n8n)
+            notifyEnrollmentToWebhook($userId, $courseId, 'manual');
             $msg = 'Alumno matriculado.'; $msgType = 'green';
         } catch (PDOException $e) {
             $msg = 'Error: ' . $e->getMessage(); $msgType = 'red';
