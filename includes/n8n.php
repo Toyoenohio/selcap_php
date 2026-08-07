@@ -17,7 +17,7 @@ function sendCertificateToN8N(int $attemptId): array
     // ── Obtener todos los datos necesarios ──
     $stmt = $pdo->prepare('
         SELECT ea.id as attempt_id, ea.score, ea.submitted_at,
-               e.title as eval_title,
+               e.title as eval_title, e.hours as eval_hours, e.date_range as eval_date_range,
                c.id as course_id, c.title as course_title, c.hours, c.date_range, c.address,
                u.id as user_id, u.first_name, u.last_name, u.rut, u.email
         FROM evaluation_attempts ea
@@ -68,8 +68,8 @@ function sendCertificateToN8N(int $attemptId): array
         'course_title'   => $data['course_title'],
         'eval_title'     => $data['eval_title'],
         'score'          => round($data['score']),
-        'date_range'     => $data['date_range'] ?: '',
-        'hours'          => $data['hours'] ? (int)$data['hours'] : 0,
+        'date_range'     => $data['eval_date_range'] ?: ($data['date_range'] ?: ''),
+        'hours'          => $data['eval_hours'] !== null ? (int)$data['eval_hours'] : ((int)$data['hours'] ?: 0),
         'address'        => $data['address'] ?: 'Av. Tobalaba 1621, Providencia, Santiago.',
         'submitted_at'   => $data['submitted_at'],
         'qr_url'         => $qrUrl,
