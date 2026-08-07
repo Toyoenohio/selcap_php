@@ -23,6 +23,16 @@ if (!$cert) {
     die('<html><body style="font-family:sans-serif;text-align:center;padding:80px 20px;"><h1 style="color:#999;">Certificado no encontrado</h1><p>El certificado solicitado no existe o no es válido.</p></body></html>');
 }
 
+// ── Si el PDF oficial (generado vía n8n) ya está listo, mostrar ESE y no el HTML viejo ──
+$certPdfStmt = $pdo->prepare('SELECT * FROM certificates WHERE attempt_id = ?');
+$certPdfStmt->execute([$attemptId]);
+$certPdfEarly = $certPdfStmt->fetch();
+
+if ($certPdfEarly && $certPdfEarly['status'] === 'ready' && !empty($certPdfEarly['certificate_url'])) {
+    header('Location: ' . BASE_URL . '/' . $certPdfEarly['certificate_url']);
+    exit;
+}
+
 $nombreCompleto = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
 $curso = htmlspecialchars($cert['course_title']);
 $fechaRealizacion = htmlspecialchars($cert['date_range'] ?? '');
