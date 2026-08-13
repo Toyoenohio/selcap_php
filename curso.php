@@ -69,6 +69,14 @@ $materialsStmt = $pdo->prepare('SELECT * FROM course_materials WHERE course_id =
 $materialsStmt->execute([$courseId]);
 $materials = $materialsStmt->fetchAll();
 
+// Todas las evaluaciones habilitadas (para el botón del sidebar)
+$activeEvals = [];
+foreach ($evalsBySection as $secEvs) {
+    foreach ($secEvs as $ev) {
+        $activeEvals[] = $ev;
+    }
+}
+
 $progress = $totalItems > 0 ? round($completedItems / $totalItems * 100) : 0;
 
 // Siguiente lección por hacer
@@ -374,6 +382,34 @@ require __DIR__ . '/includes/header.php';
         </div>
       </div>
     </div>
+
+    <!-- Botón de evaluación (visible solo cuando hay evaluaciones habilitadas) -->
+    <?php if (!empty($activeEvals)): ?>
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
+      <h3 class="font-bold text-neutral-900 mb-4">Evaluación</h3>
+      <div class="flex flex-col gap-3">
+        <?php foreach ($activeEvals as $ev):
+          $isDone = isset($completedEvalIds[$ev['id']]);
+        ?>
+          <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $ev['id'] ?>"
+             class="flex items-center gap-3 p-4 rounded-xl border-2 <?= $isDone ? 'border-green-200 bg-green-50/50 hover:border-green-400' : 'border-amber-300 bg-amber-50 hover:border-amber-500' ?> transition-colors group">
+            <div class="w-10 h-10 rounded-lg <?= $isDone ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600' ?> flex items-center justify-center shrink-0">
+              <?php if ($isDone): ?>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <?php else: ?>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+              <?php endif; ?>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-neutral-900 group-hover:text-primary-600 transition-colors truncate"><?= htmlspecialchars($ev['title']) ?></p>
+              <p class="text-xs text-neutral-500 font-medium"><?= $isDone ? 'Aprobada ✓' : 'Disponible ahora' ?></p>
+            </div>
+            <svg class="w-5 h-5 text-neutral-300 group-hover:text-primary-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 
