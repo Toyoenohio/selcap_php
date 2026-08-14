@@ -61,10 +61,6 @@ function registerUser(string $email, string $password, string $firstName, string
     $stmt->execute([$email, $hash, $firstName, $lastName]);
     $userId = (int) $pdo->lastInsertId();
 
-    // Auto-enroll al curso activo
-    $stmt = $pdo->prepare('INSERT IGNORE INTO enrollments (user_id, course_id) VALUES (?, ?)');
-    $stmt->execute([$userId, ACTIVE_COURSE_ID]);
-
     // Iniciar sesión
     $_SESSION['user_id'] = $userId;
     return ['ok' => true, 'user_id' => $userId];
@@ -88,10 +84,6 @@ function loginUser(string $email, string $password): array {
     }
 
     $_SESSION['user_id'] = (int) $user['id'];
-
-    // Auto-enroll por si acaso
-    $stmt = db()->prepare('INSERT IGNORE INTO enrollments (user_id, course_id) VALUES (?, ?)');
-    $stmt->execute([$user['id'], ACTIVE_COURSE_ID]);
 
     return ['ok' => true];
 }
