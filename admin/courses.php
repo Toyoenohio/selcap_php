@@ -367,7 +367,7 @@ function showStudents(courseId, courseTitle) {
     document.getElementById('studentsModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 
-    fetch(BASE_URL + '/admin/course-students.php?course_id=' + courseId)
+    fetch('admin/course-students.php?course_id=' + courseId)
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function (data) {
             if (!data.success) throw new Error(data.error || 'Error');
