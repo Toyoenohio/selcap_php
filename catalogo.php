@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
+$user = currentUser();
 $userId = $_SESSION['user_id'];
 $pdo = db();
+
+// El catálogo ya no está abierto a estudiantes: las matrículas se crean
+// por pago (WooCommerce → webhook) o por el admin. Redirigir a Mis Cursos.
+if (!$user || $user['role'] !== 'admin') {
+    header('Location: ' . BASE_URL . '/mis-cursos.php');
+    exit;
+}
 
 $enrolledIds = [];
 $enrStmt = $pdo->prepare('SELECT course_id FROM enrollments WHERE user_id = ?');

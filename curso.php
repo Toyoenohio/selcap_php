@@ -12,7 +12,7 @@ $enrStmt = $pdo->prepare('SELECT * FROM enrollments WHERE user_id = ? AND course
 $enrStmt->execute([$userId, $courseId]);
 $enrollment = $enrStmt->fetch();
 if (!$enrollment) {
-    header('Location: ' . BASE_URL . '/catalogo.php');
+    header('Location: ' . BASE_URL . '/mis-cursos.php');
     exit;
 }
 

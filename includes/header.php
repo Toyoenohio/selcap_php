@@ -80,11 +80,6 @@ $currentPage = $currentPage ?? '';
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
         Panel
       </a>
-      <a href="<?= BASE_URL ?>/catalogo.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-        <?= $currentPage === 'catalogo' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-        Catálogo
-      </a>
       <a href="<?= BASE_URL ?>/mis-cursos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
         <?= $currentPage === 'mis-cursos' ? 'bg-primary-50 text-primary-600' : 'text-neutral-600 hover:bg-neutral-100' ?>">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
@@ -154,7 +149,6 @@ $currentPage = $currentPage ?? '';
   <div id="mobile-menu" class="hidden lg:hidden fixed inset-0 z-40 bg-white pt-16">
     <nav class="p-4 space-y-1">
       <a href="<?= BASE_URL ?>/dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'dashboard' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📊 Panel</a>
-      <a href="<?= BASE_URL ?>/catalogo.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'catalogo' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">🏷️ Catálogo</a>
       <a href="<?= BASE_URL ?>/mis-cursos.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'mis-cursos' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">📚 Mis Cursos</a>
       <a href="<?= BASE_URL ?>/certificados.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'certificados' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">🏅 Certificados</a>
       <a href="<?= BASE_URL ?>/perfil.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium <?= $currentPage === 'perfil' ? 'bg-selcap-50 text-selcap-700' : 'text-gray-600' ?>">👤 Perfil</a>

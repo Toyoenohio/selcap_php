@@ -31,11 +31,8 @@ require __DIR__ . '/includes/header.php';
     </div>
     <h3 class="text-lg font-semibold text-neutral-900 mb-2">No tienes cursos</h3>
     <p class="text-neutral-500 mb-6 max-w-md">
-      Parece que aún no estás inscrito en ningún curso. Visita nuestro catálogo para encontrar el curso perfecto para ti.
+      Parece que aún no estás inscrito en ningún curso. Tu acceso se activa automáticamente al completar tu compra.
     </p>
-    <a href="<?= BASE_URL ?>/catalogo.php" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors text-sm">
-      Explorar catálogo
-    </a>
   </div>
 <?php else: ?>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
