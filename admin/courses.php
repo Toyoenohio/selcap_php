@@ -262,7 +262,13 @@ require __DIR__ . '/../includes/header.php';
             <span>·</span>
             <span><?= $c['lessons_cnt'] ?> lecciones</span>
             <span>·</span>
-            <span><?= $c['students'] ?> alumnos</span>
+            <button type="button" onclick="showStudents(<?= (int)$c['id'] ?>, '<?= htmlspecialchars(addslashes($c['title']), ENT_QUOTES) ?>')"
+                    class="inline-flex items-center gap-1 text-xs font-semibold text-selcap-700 hover:text-selcap-900 hover:underline transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+              <?= (int)$c['students'] ?> alumnos
+            </button>
             <?php if ($c['sku']): ?>
               <span>·</span>
               <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500"><?= htmlspecialchars($c['sku']) ?></span>
@@ -352,6 +358,82 @@ function duplicateCourse(id, title) {
     document.getElementById('clone_title_'+id).value = name;
     return true;
 }
+
+// ── Modal de matriculados ──
+function showStudents(courseId, courseTitle) {
+    document.getElementById('studentsModalTitle').textContent = courseTitle;
+    var body = document.getElementById('studentsModalBody');
+    body.innerHTML = '<div class="flex items-center justify-center py-10 text-gray-400 text-sm">Cargando matriculados...</div>';
+    document.getElementById('studentsModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    fetch(BASE_URL + '/admin/course-students.php?course_id=' + courseId)
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (data) {
+            if (!data.success) throw new Error(data.error || 'Error');
+            var total = data.total || 0;
+            document.getElementById('studentsModalCount').textContent = total + (total === 1 ? ' matriculado' : ' matriculados');
+            if (total === 0) {
+                body.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">No hay alumnos matriculados en este curso.</div>';
+                return;
+            }
+            var rows = data.students.map(function (s) {
+                var initials = (s.first_name || '?').charAt(0) + (s.last_name || '').charAt(0);
+                var activeBadge = s.is_active == 1
+                    ? '<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">Activo</span>'
+                    : '<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500">Inactivo</span>';
+                return '<tr class="hover:bg-gray-50">' +
+                    '<td class="px-4 py-2.5"><div class="flex items-center gap-2.5">' +
+                    '<div class="w-7 h-7 rounded-full bg-selcap-100 text-selcap-700 flex items-center justify-center text-[11px] font-bold shrink-0">' + initials + '</div>' +
+                    '<div><div class="text-sm font-medium text-gray-900">' + escHtml(s.full_name) + '</div>' +
+                    '<div class="text-xs text-gray-400">' + escHtml(s.email) + '</div></div></div></td>' +
+                    '<td class="px-4 py-2.5 text-sm text-gray-600">' + escHtml(s.rut || '—') + '</td>' +
+                    '<td class="px-4 py-2.5 text-sm text-gray-600">' + escHtml(s.enrolled_at || '—') + '</td>' +
+                    '<td class="px-4 py-2.5 text-right">' + activeBadge + '</td>' +
+                    '</tr>';
+            }).join('');
+            body.innerHTML =
+                '<div class="max-h-[55vh] overflow-y-auto">' +
+                '<table class="w-full text-left">' +
+                '<thead class="sticky top-0 bg-gray-50 text-[11px] uppercase tracking-wider text-gray-400">' +
+                '<tr><th class="px-4 py-2 font-semibold">Alumno</th><th class="px-4 py-2 font-semibold">RUT</th><th class="px-4 py-2 font-semibold">Matriculado</th><th class="px-4 py-2 font-semibold text-right">Estado</th></tr>' +
+                '</thead><tbody>' + rows + '</tbody></table></div>';
+        })
+        .catch(function (err) {
+            body.innerHTML = '<div class="text-center py-10 text-red-500 text-sm">Error al cargar matriculados: ' + escHtml(err.message) + '</div>';
+        });
+}
+
+function closeStudents() {
+    document.getElementById('studentsModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeStudents(); });
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
 </script>
+
+<!-- Modal matriculados -->
+<div id="studentsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeStudents()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div>
+        <h3 class="font-bold text-gray-900">Matriculados</h3>
+        <p id="studentsModalTitle" class="text-sm text-gray-500 truncate max-w-md"></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="studentsModalCount" class="text-xs font-semibold bg-selcap-50 text-selcap-700 px-2.5 py-1 rounded-full"></span>
+        <button onclick="closeStudents()" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="studentsModalBody" class="p-2"></div>
+  </div>
+</div>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>

@@ -1,0 +1,53 @@
+<?php
+// Endpoint AJAX: matriculados de un curso → JSON
+// GET /admin/course-students.php?course_id=X
+require_once __DIR__ . '/../includes/auth.php';
+requireAdmin();
+
+$courseId = (int)($_GET['course_id'] ?? 0);
+if ($courseId <= 0) {
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'course_id requerido']);
+    exit;
+}
+
+$pdo = db();
+
+// Curso (título para el modal)
+$courseStmt = $pdo->prepare('SELECT id, title FROM courses WHERE id = ?');
+$courseStmt->execute([$courseId]);
+$course = $courseStmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$course) {
+    http_response_code(404);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'Curso no encontrado']);
+    exit;
+}
+
+// Matriculados con datos de usuario
+$stmt = $pdo->prepare('
+    SELECT u.id, u.first_name, u.last_name, u.email, u.rut, u.is_active,
+           e.enrolled_at, e.status
+    FROM enrollments e
+    JOIN users u ON e.user_id = u.id
+    WHERE e.course_id = ?
+    ORDER BY u.last_name, u.first_name
+');
+$stmt->execute([$courseId]);
+$students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($students as &$s) {
+    $s['full_name'] = trim($s['first_name'] . ' ' . $s['last_name']);
+    $s['enrolled_at'] = $s['enrolled_at'] ? date('d/m/Y', strtotime($s['enrolled_at'])) : '';
+}
+unset($s);
+
+header('Content-Type: application/json');
+echo json_encode([
+    'success' => true,
+    'course'  => $course,
+    'students' => $students,
+    'total'   => count($students),
+]);
