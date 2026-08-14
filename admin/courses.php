@@ -263,6 +263,7 @@ require __DIR__ . '/../includes/header.php';
             <span><?= $c['lessons_cnt'] ?> lecciones</span>
             <span>·</span>
             <button type="button" onclick="showStudents(<?= (int)$c['id'] ?>, '<?= htmlspecialchars(addslashes($c['title']), ENT_QUOTES) ?>')"
+                    data-course-students="<?= (int)$c['id'] ?>"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-selcap-700 hover:text-selcap-900 hover:underline transition-colors cursor-pointer">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -361,6 +362,7 @@ function duplicateCourse(id, title) {
 
 // ── Modal de matriculados ──
 function showStudents(courseId, courseTitle) {
+    _studentsModalState = { courseId: courseId, courseTitle: courseTitle };
     document.getElementById('studentsModalTitle').textContent = courseTitle;
     var body = document.getElementById('studentsModalBody');
     body.innerHTML = '<div class="flex items-center justify-center py-10 text-gray-400 text-sm">Cargando matriculados...</div>';
@@ -390,13 +392,18 @@ function showStudents(courseId, courseTitle) {
                     '<td class="px-4 py-2.5 text-sm text-gray-600">' + escHtml(s.rut || '—') + '</td>' +
                     '<td class="px-4 py-2.5 text-sm text-gray-600">' + escHtml(s.enrolled_at || '—') + '</td>' +
                     '<td class="px-4 py-2.5 text-right">' + activeBadge + '</td>' +
+                    '<td class="px-4 py-2.5 text-right whitespace-nowrap">' +
+                    '<button type="button" onclick="unenrollStudent(' + courseId + ', ' + s.id + ', \'' + escHtml(s.full_name).replace(/'/g, "\\'") + '\')" ' +
+                    'class="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">' +
+                    '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
+                    'Desmatricular</button></td>' +
                     '</tr>';
             }).join('');
             body.innerHTML =
                 '<div class="max-h-[55vh] overflow-y-auto">' +
                 '<table class="w-full text-left">' +
                 '<thead class="sticky top-0 bg-gray-50 text-[11px] uppercase tracking-wider text-gray-400">' +
-                '<tr><th class="px-4 py-2 font-semibold">Alumno</th><th class="px-4 py-2 font-semibold">RUT</th><th class="px-4 py-2 font-semibold">Matriculado</th><th class="px-4 py-2 font-semibold text-right">Estado</th></tr>' +
+                '<tr><th class="px-4 py-2 font-semibold">Alumno</th><th class="px-4 py-2 font-semibold">RUT</th><th class="px-4 py-2 font-semibold">Matriculado</th><th class="px-4 py-2 font-semibold text-right">Estado</th><th class="px-4 py-2 font-semibold text-right">Acciones</th></tr>' +
                 '</thead><tbody>' + rows + '</tbody></table></div>';
         })
         .catch(function (err) {
@@ -413,6 +420,37 @@ function escHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
+}
+
+// ── Desmatricular desde el modal ──
+var _studentsModalState = null; // { courseId, courseTitle } para refrescar tras unenroll
+function unenrollStudent(courseId, userId, studentName) {
+    if (!confirm('¿Desmatricular a ' + studentName + ' de este curso?\n\nEl alumno perderá el acceso al curso (y a su certificado si está aprobado).')) {
+        return;
+    }
+    var body = document.getElementById('studentsModalBody');
+    body.innerHTML = '<div class="flex items-center justify-center py-10 text-gray-400 text-sm">Desmatriculando...</div>';
+
+    fetch('/admin/course-students.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unenroll', course_id: courseId, user_id: userId })
+    })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
+        .then(function () {
+            // Refrescar modal + contador de la tarjeta del curso
+            if (_studentsModalState) {
+                showStudents(_studentsModalState.courseId, _studentsModalState.courseTitle);
+            }
+            var counter = document.querySelector('[data-course-students="' + courseId + '"]');
+            if (counter) {
+                var n = parseInt(counter.textContent, 10) || 0;
+                counter.textContent = Math.max(0, n - 1) + ' alumnos';
+            }
+        })
+        .catch(function (err) {
+            body.innerHTML = '<div class="text-center py-10 text-red-500 text-sm">Error al desmatricular: ' + escHtml(err.message) + '</div>';
+        });
 }
 </script>
 
