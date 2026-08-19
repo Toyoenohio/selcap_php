@@ -17,8 +17,9 @@ define('UPLOADS_URL', '/uploads');
 define('ACTIVE_COURSE_ID', 1);
 
 // ── n8n — Generación de certificados PDF ──
-define('N8N_WEBHOOK_URL', getenv('N8N_WEBHOOK_URL') ?: 'https://n8nciwok-n8n.wz1vdn.easypanel.host/webhook-test/selcap-certificados');
+define('N8N_WEBHOOK_URL', getenv('N8N_WEBHOOK_URL') ?: 'https://n8nciwok-n8n.wz1vdn.easypanel.host/webhook/selcap-certificados');
 define('N8N_CERT_CALLBACK_SECRET', getenv('N8N_CERT_CALLBACK_SECRET') ?: 'selcap-cert-callback-2026');
+define('N8N_WELCOME_WEBHOOK_URL', getenv('N8N_WELCOME_WEBHOOK_URL') ?: 'https://n8nciwok-n8n.wz1vdn.easypanel.host/webhook/selcap-bienvenida');
 
 // ── Conexión PDO ──
 function db(): PDO {
