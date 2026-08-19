@@ -58,6 +58,25 @@ require __DIR__ . '/includes/header.php';
         </div>
         <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <?php
+            // Encuesta post-examen: estado por curso
+            $surveyStatus = null;
+            if (!empty($cert['course_id'])) {
+              $survChk = $pdo->prepare('SELECT id FROM course_surveys WHERE user_id = ? AND course_id = ? LIMIT 1');
+              $survChk->execute([$userId, $cert['course_id']]);
+              $surveyStatus = $survChk->fetch() ? 'done' : 'pending';
+            }
+            if ($surveyStatus === 'done'):
+          ?>
+            <span class="bg-green-50 text-green-700 font-semibold px-3 py-1.5 rounded-lg text-sm inline-flex items-center gap-1" title="Respondiste la encuesta de satisfacción de este curso">
+              ✅ Encuesta respondida
+            </span>
+          <?php elseif ($surveyStatus === 'pending'): ?>
+            <a href="<?= BASE_URL ?>/evaluation.php?id=<?= $cert['evaluation_id'] ?>#encuesta"
+               class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm">
+              📋 Responder encuesta
+            </a>
+          <?php endif; ?>
+          <?php
             $status = $cert['cert_status'] ?? null;
             if ($status === 'ready' && !empty($cert['certificate_url'])):
           ?>

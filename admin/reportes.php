@@ -77,6 +77,87 @@ require __DIR__ . '/../includes/header.php';
   </div>
 </div>
 
+<!-- Encuestas de satisfacción -->
+<?php
+$survSummary = $pdo->query('
+    SELECT c.id, c.title, COUNT(s.id) as total,
+           ROUND(AVG(s.eval_general), 2) as avg_general,
+           ROUND(AVG(s.eval_contenido), 2) as avg_contenido,
+           ROUND(AVG(s.eval_instructor), 2) as avg_instructor,
+           SUM(s.recomendaria) as recomendarian,
+           COUNT(s.comentarios) as con_comentarios
+    FROM courses c
+    LEFT JOIN course_surveys s ON s.course_id = c.id
+    GROUP BY c.id, c.title
+    HAVING total > 0
+    ORDER BY total DESC
+')->fetchAll();
+
+$survRecent = $pdo->query('
+    SELECT s.*, u.first_name, u.last_name, u.email, c.title as course_title
+    FROM course_surveys s
+    JOIN users u ON s.user_id = u.id
+    JOIN courses c ON s.course_id = c.id
+    ORDER BY s.created_at DESC
+    LIMIT 10
+')->fetchAll();
+?>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-bold text-gray-900">📋 Encuestas de satisfacción</h2>
+    <span class="text-xs text-gray-400">Escala 1-4</span>
+  </div>
+
+  <?php if (empty($survSummary)): ?>
+    <p class="text-gray-400 text-sm py-4">Aún no hay encuestas respondidas.</p>
+  <?php else: ?>
+    <div class="overflow-x-auto mb-4">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="text-left px-3 py-2.5 font-semibold text-gray-600">Curso</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Respuestas</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Gral.</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Contenido</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Instructor</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Recomienda</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Comentarios</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <?php foreach ($survSummary as $s): ?>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-3 py-3 font-medium text-gray-800"><?= htmlspecialchars($s['title']) ?></td>
+              <td class="px-3 py-3 text-center text-gray-700 font-semibold"><?= (int)$s['total'] ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_general'] !== null ? htmlspecialchars($s['avg_general']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_contenido'] !== null ? htmlspecialchars($s['avg_contenido']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_instructor'] !== null ? htmlspecialchars($s['avg_instructor']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= (int)$s['recomendarian'] ?>/<?= (int)$s['total'] ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= (int)$s['con_comentarios'] ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="text-sm font-bold text-gray-700 mb-2">Últimas respuestas</h3>
+    <div class="space-y-2">
+      <?php foreach ($survRecent as $r): ?>
+        <div class="bg-gray-50 rounded-xl p-3 text-sm">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-medium text-gray-800"><?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?></span>
+            <span class="text-xs text-gray-400"><?= date('d/m/Y H:i', strtotime($r['created_at'])) ?></span>
+          </div>
+          <p class="text-xs text-gray-500"><?= htmlspecialchars($r['course_title']) ?> · Gral <?= (int)$r['eval_general'] ?>/4 · Contenido <?= $r['eval_contenido'] !== null ? (int)$r['eval_contenido'] . '/4' : '—' ?> · Instructor <?= $r['eval_instructor'] !== null ? (int)$r['eval_instructor'] . '/4' : '—' ?> · <?= $r['recomendaria'] ? '✅ Recomienda' : '❌ No recomienda' ?></p>
+          <?php if (!empty($r['comentarios'])): ?>
+            <p class="text-xs text-gray-600 mt-1 italic">"<?= htmlspecialchars($r['comentarios']) ?>"</p>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
 <!-- Filtros -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
   <form method="GET" class="grid grid-cols-1 sm:grid-cols-4 gap-3">

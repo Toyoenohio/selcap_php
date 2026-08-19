@@ -69,6 +69,65 @@ $lastAttempt = $lastStmt->fetch();
 $alreadyTaken = (bool) $lastAttempt;
 $passed = $alreadyTaken && $lastAttempt['passed'];
 
+// ── Encuesta post-examen: ¿ya respondió? (course_id de la evaluación) ──
+$surveyCourseId = (int)($evaluation['course_id'] ?? 0);
+if ($surveyCourseId > 0) {
+    $survCheck = $pdo->prepare('SELECT * FROM course_surveys WHERE user_id = ? AND course_id = ? LIMIT 1');
+    $survCheck->execute([$userId, $surveyCourseId]);
+    $existingSurvey = $survCheck->fetch();
+}
+
+// ── Guardar encuesta post-examen (procesar ANTES del bloque alreadyTaken) ──
+$surveySaved = false;
+$surveyError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_survey']) && $surveyCourseId > 0) {
+    // Escala 1-4; comentarios opcionales
+    $evalGeneral   = (int)($_POST['eval_general'] ?? 0);
+    $evalContenido = (int)($_POST['eval_contenido'] ?? 0);
+    $evalInstructor = (int)($_POST['eval_instructor'] ?? 0);
+    $recomendaria  = isset($_POST['recomendaria']) ? 1 : 0;
+    $comentarios   = trim($_POST['comentarios'] ?? '');
+
+    $valid = $evalGeneral >= 1 && $evalGeneral <= 4;
+
+    if (!$valid) {
+        $surveyError = 'Por favor responde la escala de evaluación general (1-4).';
+    } else {
+        try {
+            $survStmt = $pdo->prepare(
+                'INSERT INTO course_surveys (user_id, course_id, eval_general, eval_contenido, eval_instructor, recomendaria, comentarios)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                    eval_general = VALUES(eval_general),
+                    eval_contenido = VALUES(eval_contenido),
+                    eval_instructor = VALUES(eval_instructor),
+                    recomendaria = VALUES(recomendaria),
+                    comentarios = VALUES(comentarios)'
+            );
+            $survStmt->execute([
+                $userId,
+                $surveyCourseId,
+                $evalGeneral,
+                $evalContenido >= 1 && $evalContenido <= 4 ? $evalContenido : null,
+                $evalInstructor >= 1 && $evalInstructor <= 4 ? $evalInstructor : null,
+                $recomendaria,
+                $comentarios !== '' ? $comentarios : null,
+            ]);
+            $surveySaved = true;
+            // Recargar encuesta recién guardada (el statement anterior ya fue consumido)
+            $survReload = $pdo->prepare('SELECT * FROM course_surveys WHERE user_id = ? AND course_id = ? LIMIT 1');
+            $survReload->execute([$userId, $surveyCourseId]);
+            $existingSurvey = $survReload->fetch();
+
+            // Auditoría
+            $auditSurv = $pdo->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)');
+            $auditSurv->execute([$userId, 'survey_submitted', 'course', $surveyCourseId, json_encode(['eval_general' => $evalGeneral]), $_SERVER['REMOTE_ADDR'] ?? '']);
+        } catch (PDOException $e) {
+            $surveyError = 'No se pudo guardar la encuesta. Intenta de nuevo.';
+        }
+    }
+}
+
 if ($alreadyTaken) {
     $pageTitle = $passed ? 'Evaluación aprobada' : 'Evaluación completada';
     require __DIR__ . '/includes/header.php';
@@ -94,6 +153,73 @@ if ($alreadyTaken) {
             Volver al curso
         </a>
     </div>
+
+    <?php if ($passed && $surveyCourseId > 0 && !$existingSurvey): ?>
+    <!-- Encuesta post-examen (desde certificados.php) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8 mt-6" id="encuesta">
+        <h2 class="text-lg font-bold text-gray-900 mb-1">📋 Encuesta de satisfacción</h2>
+        <p class="text-sm text-gray-500 mb-6">Tu opinión nos ayuda a mejorar la experiencia de capacitación. Responde en una escala del 1 (muy en desacuerdo) al 4 (muy de acuerdo).</p>
+
+        <?php if ($surveySaved): ?>
+        <div class="p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium">
+            ✅ ¡Gracias por tu respuesta! Tu encuesta fue registrada.
+        </div>
+        <?php elseif ($surveyError): ?>
+        <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium mb-4">
+            ⚠️ <?= htmlspecialchars($surveyError) ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!$surveySaved): ?>
+        <form method="POST" class="space-y-6">
+            <?php
+            $surveyQuestions2 = [
+                'eval_general'    => '¿Cómo calificas tu experiencia general con el curso?',
+                'eval_contenido'  => '¿El contenido fue claro, completo y útil para tu trabajo?',
+                'eval_instructor' => '¿El instructor dominó el tema y respondió tus dudas?',
+            ];
+            $scaleLabels2 = ['', 'Muy malo', 'Regular', 'Bueno', 'Excelente'];
+            foreach ($surveyQuestions2 as $field => $label):
+            ?>
+            <div>
+                <p class="font-semibold text-gray-800 mb-3"><?= htmlspecialchars($label) ?></p>
+                <div class="grid grid-cols-4 gap-2">
+                    <?php for ($i = 1; $i <= 4; $i++): ?>
+                    <label class="flex flex-col items-center gap-1 px-3 py-3 bg-gray-50 hover:bg-selcap-50 rounded-xl cursor-pointer border border-gray-100 hover:border-selcap-200 transition-colors has-[:checked]:border-selcap-500 has-[:checked]:bg-selcap-50">
+                        <input type="radio" name="<?= $field ?>" value="<?= $i ?>" required class="accent-selcap-600 w-4 h-4">
+                        <span class="text-sm font-medium text-gray-700"><?= $i ?></span>
+                        <span class="text-[10px] text-gray-400 text-center leading-tight"><?= $scaleLabels2[$i] ?></span>
+                    </label>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+
+            <div>
+                <p class="font-semibold text-gray-800 mb-2">¿Recomendarías este curso a un colega?</p>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-selcap-50 rounded-xl cursor-pointer border border-gray-100 has-[:checked]:border-selcap-500 has-[:checked]:bg-selcap-50 transition-colors">
+                        <input type="checkbox" name="recomendaria" value="1" class="accent-selcap-600 w-4 h-4">
+                        <span class="text-sm text-gray-700">Sí, lo recomendaría</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <p class="font-semibold text-gray-800 mb-2">Comentarios (opcional)</p>
+                <textarea name="comentarios" rows="3" maxlength="1000"
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"
+                    placeholder="¿Qué te gustó? ¿Qué mejorarías?"></textarea>
+            </div>
+
+            <button type="submit" name="submit_survey" value="1"
+                    class="w-full bg-selcap-600 hover:bg-selcap-700 text-white font-semibold py-3 rounded-xl transition-colors text-base">
+                Enviar encuesta
+            </button>
+        </form>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
     <?php
     require __DIR__ . '/includes/footer.php';
     exit;
@@ -115,6 +241,9 @@ $submitted = false;
 $score = 0;
 $total = 0;
 $passed = false;
+$surveySaved = false;
+$surveyError = '';
+$existingSurvey = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_eval'])) {
     $responses = $_POST['answer'] ?? [];
@@ -199,6 +328,73 @@ require __DIR__ . '/includes/header.php';
       </a>
     </div>
   </div>
+
+  <?php if ($passed && $surveyCourseId > 0 && !$existingSurvey): ?>
+  <!-- Encuesta post-examen -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8 mt-6">
+    <h2 class="text-lg font-bold text-gray-900 mb-1">📋 Encuesta de satisfacción</h2>
+    <p class="text-sm text-gray-500 mb-6">Tu opinión nos ayuda a mejorar la experiencia de capacitación. Responde en una escala del 1 (muy en desacuerdo) al 4 (muy de acuerdo).</p>
+
+    <?php if ($surveySaved): ?>
+      <div class="p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium">
+        ✅ ¡Gracias por tu respuesta! Tu encuesta fue registrada.
+      </div>
+    <?php elseif ($surveyError): ?>
+      <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium mb-4">
+        ⚠️ <?= htmlspecialchars($surveyError) ?>
+      </div>
+    <?php endif; ?>
+
+    <?php if (!$surveySaved): ?>
+    <form method="POST" class="space-y-6">
+      <?php
+      $surveyQuestions = [
+        'eval_general'    => '¿Cómo calificas tu experiencia general con el curso?',
+        'eval_contenido'  => '¿El contenido fue claro, completo y útil para tu trabajo?',
+        'eval_instructor' => '¿El instructor dominó el tema y respondió tus dudas?',
+      ];
+      $scaleLabels = ['', 'Muy malo', 'Regular', 'Bueno', 'Excelente'];
+      foreach ($surveyQuestions as $field => $label):
+      ?>
+        <div>
+          <p class="font-semibold text-gray-800 mb-3"><?= htmlspecialchars($label) ?></p>
+          <div class="grid grid-cols-4 gap-2">
+            <?php for ($i = 1; $i <= 4; $i++): ?>
+              <label class="flex flex-col items-center gap-1 px-3 py-3 bg-gray-50 hover:bg-selcap-50 rounded-xl cursor-pointer border border-gray-100 hover:border-selcap-200 transition-colors has-[:checked]:border-selcap-500 has-[:checked]:bg-selcap-50">
+                <input type="radio" name="<?= $field ?>" value="<?= $i ?>" required class="accent-selcap-600 w-4 h-4">
+                <span class="text-sm font-medium text-gray-700"><?= $i ?></span>
+                <span class="text-[10px] text-gray-400 text-center leading-tight"><?= $scaleLabels[$i] ?></span>
+              </label>
+            <?php endfor; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+
+      <div>
+        <p class="font-semibold text-gray-800 mb-2">¿Recomendarías este curso a un colega?</p>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-selcap-50 rounded-xl cursor-pointer border border-gray-100 has-[:checked]:border-selcap-500 has-[:checked]:bg-selcap-50 transition-colors">
+            <input type="checkbox" name="recomendaria" value="1" class="accent-selcap-600 w-4 h-4">
+            <span class="text-sm text-gray-700">Sí, lo recomendaría</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-gray-800 mb-2">Comentarios (opcional)</p>
+        <textarea name="comentarios" rows="3" maxlength="1000"
+          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-selcap-500 text-sm"
+          placeholder="¿Qué te gustó? ¿Qué mejorarías?"></textarea>
+      </div>
+
+      <button type="submit" name="submit_survey" value="1"
+              class="w-full bg-selcap-600 hover:bg-selcap-700 text-white font-semibold py-3 rounded-xl transition-colors text-base">
+        Enviar encuesta
+      </button>
+    </form>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
 
 <?php else: ?>
   <!-- Formulario de evaluación -->
