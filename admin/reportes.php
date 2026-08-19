@@ -82,10 +82,12 @@ require __DIR__ . '/../includes/header.php';
 $survSummary = $pdo->query('
     SELECT c.id, c.title, COUNT(s.id) as total,
            ROUND(AVG(s.eval_general), 2) as avg_general,
-           ROUND(AVG(s.eval_contenido), 2) as avg_contenido,
-           ROUND(AVG(s.eval_instructor), 2) as avg_instructor,
-           SUM(s.recomendaria) as recomendarian,
-           COUNT(s.comentarios) as con_comentarios
+           ROUND(AVG(s.eval_tecnologia), 2) as avg_tecnologia,
+           ROUND(AVG(s.horario_adecuado), 2) as avg_horario,
+           ROUND(AVG(s.proceso_inscripcion), 2) as avg_inscripcion,
+           ROUND(AVG(s.efectividad_relator), 2) as avg_relator,
+           SUM(s.autoriza_publicar = 1) as autorizan,
+           COUNT(NULLIF(s.experiencia, "")) as con_experiencia
     FROM courses c
     LEFT JOIN course_surveys s ON s.course_id = c.id
     GROUP BY c.id, c.title
@@ -105,7 +107,7 @@ $survRecent = $pdo->query('
 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-lg font-bold text-gray-900">📋 Encuestas de satisfacción</h2>
-    <span class="text-xs text-gray-400">Escala 1-4</span>
+    <span class="text-xs text-gray-400">Escala 1-4 · 11 preguntas oficiales</span>
   </div>
 
   <?php if (empty($survSummary)): ?>
@@ -118,10 +120,12 @@ $survRecent = $pdo->query('
             <th class="text-left px-3 py-2.5 font-semibold text-gray-600">Curso</th>
             <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Respuestas</th>
             <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Gral.</th>
-            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Contenido</th>
-            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Instructor</th>
-            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Recomienda</th>
-            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Comentarios</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Tecnología</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Horario</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Inscripción</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Relator</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Autorizan</th>
+            <th class="text-center px-3 py-2.5 font-semibold text-gray-600">Testimonios</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
@@ -130,10 +134,12 @@ $survRecent = $pdo->query('
               <td class="px-3 py-3 font-medium text-gray-800"><?= htmlspecialchars($s['title']) ?></td>
               <td class="px-3 py-3 text-center text-gray-700 font-semibold"><?= (int)$s['total'] ?></td>
               <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_general'] !== null ? htmlspecialchars($s['avg_general']) : '—' ?></td>
-              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_contenido'] !== null ? htmlspecialchars($s['avg_contenido']) : '—' ?></td>
-              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_instructor'] !== null ? htmlspecialchars($s['avg_instructor']) : '—' ?></td>
-              <td class="px-3 py-3 text-center text-gray-700"><?= (int)$s['recomendarian'] ?>/<?= (int)$s['total'] ?></td>
-              <td class="px-3 py-3 text-center text-gray-700"><?= (int)$s['con_comentarios'] ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_tecnologia'] !== null ? htmlspecialchars($s['avg_tecnologia']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_horario'] !== null ? htmlspecialchars($s['avg_horario']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_inscripcion'] !== null ? htmlspecialchars($s['avg_inscripcion']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= $s['avg_relator'] !== null ? htmlspecialchars($s['avg_relator']) : '—' ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= (int)$s['autorizan'] ?>/<?= (int)$s['total'] ?></td>
+              <td class="px-3 py-3 text-center text-gray-700"><?= (int)$s['con_experiencia'] ?></td>
             </tr>
           <?php endforeach; ?>
         </tbody>
@@ -148,9 +154,29 @@ $survRecent = $pdo->query('
             <span class="font-medium text-gray-800"><?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?></span>
             <span class="text-xs text-gray-400"><?= date('d/m/Y H:i', strtotime($r['created_at'])) ?></span>
           </div>
-          <p class="text-xs text-gray-500"><?= htmlspecialchars($r['course_title']) ?> · Gral <?= (int)$r['eval_general'] ?>/4 · Contenido <?= $r['eval_contenido'] !== null ? (int)$r['eval_contenido'] . '/4' : '—' ?> · Instructor <?= $r['eval_instructor'] !== null ? (int)$r['eval_instructor'] . '/4' : '—' ?> · <?= $r['recomendaria'] ? '✅ Recomienda' : '❌ No recomienda' ?></p>
-          <?php if (!empty($r['comentarios'])): ?>
-            <p class="text-xs text-gray-600 mt-1 italic">"<?= htmlspecialchars($r['comentarios']) ?>"</p>
+          <p class="text-xs text-gray-500">
+            <?= htmlspecialchars($r['course_title']) ?> ·
+            Gral <?= (int)$r['eval_general'] ?>/4 ·
+            Tec <?= $r['eval_tecnologia'] !== null ? (int)$r['eval_tecnologia'] . '/4' : '—' ?> ·
+            Horario <?= $r['horario_adecuado'] !== null ? (int)$r['horario_adecuado'] . '/4' : '—' ?> ·
+            Insc <?= $r['proceso_inscripcion'] !== null ? (int)$r['proceso_inscripcion'] . '/4' : '—' ?> ·
+            Relator <?= $r['efectividad_relator'] !== null ? (int)$r['efectividad_relator'] . '/4' : '—' ?>
+            <?= $r['autoriza_publicar'] === null ? '' : ($r['autoriza_publicar'] ? '· ✅ Autoriza publicar' : '· 🔒 No autoriza publicar') ?>
+          </p>
+          <?php if (!empty($r['mejoras'])): ?>
+            <p class="text-xs text-gray-600 mt-1"><strong>Mejoras:</strong> "<?= htmlspecialchars($r['mejoras']) ?>"</p>
+          <?php endif; ?>
+          <?php if (!empty($r['dificultades_tecnologia'])): ?>
+            <p class="text-xs text-gray-600 mt-1"><strong>Dif. tecnología:</strong> "<?= htmlspecialchars($r['dificultades_tecnologia']) ?>"</p>
+          <?php endif; ?>
+          <?php if (!empty($r['experiencia'])): ?>
+            <p class="text-xs text-gray-600 mt-1 italic">"<?= htmlspecialchars($r['experiencia']) ?>"</p>
+          <?php endif; ?>
+          <?php if (!empty($r['comentario_final'])): ?>
+            <p class="text-xs text-gray-600 mt-1"><strong>Comentario final:</strong> "<?= htmlspecialchars($r['comentario_final']) ?>"</p>
+          <?php endif; ?>
+          <?php if (!empty($r['nombre_publico'])): ?>
+            <p class="text-xs text-gray-500 mt-1">✍️ <?= htmlspecialchars($r['nombre_publico']) ?></p>
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
